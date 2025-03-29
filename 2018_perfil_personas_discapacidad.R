@@ -14,3 +14,9 @@ unzip(zipfile = temp_zip, exdir = temp_dir)
 archivos_descomprimidos <- list.files(temp_dir, pattern = "\\.csv$", full.names = TRUE)
 base <- read.csv(archivos_descomprimidos[1],
                  sep =';')
+
+#falta ponderar
+base |> count(hogar_dificultad )
+base |> count(dificultad_total)
+base |> count(dificultad_6ymas )
+base |> count(tipo_dificultad)
