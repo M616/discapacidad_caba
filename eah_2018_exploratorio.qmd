@@ -6,11 +6,16 @@ format: html
 editor: visual
 ---
 
+::: {style="position: absolute; top: 10px; right: 10px;"}
+<img src="https://www.estadisticaciudad.gob.ar/eyc/wp-content/uploads/2024/07/logo-BA-Azul.png" width="150"/>
+:::
+
 ```{r , setup, include=FALSE, echo=FALSE}
 {library(tidyverse)
 library(survey)
 library(srvyr)
 library(ggthemes)
+library(kableExtra)
 }
 ```
 
@@ -48,14 +53,13 @@ base_survey <-
 
 base_survey |> 
   group_by(alguna_dificultad) %>%
-  summarise(prop = survey_prop(level = 0.95, 
+  summarise(prop = round(survey_prop(level = 0.95, 
                                vartype = 'cv')
-            *100)
+            *100)) |>  kableExtra::kable()
 
 ```
 
 Incidencia poblacion mayor a 5
-
 
 ```{r incidencia>5, echo= FALSE, message = FALSE  , warning =FALSE}
 
@@ -64,7 +68,7 @@ base_survey |>
   group_by(alguna_dificultad) %>%
   summarise(prop = round(survey_prop( level = 0.95, 
                                vartype = 'cv')
-            *100))
+            *100)) |> kableExtra::kable()
 ```
 
 Población mayor a 6. Proporcion de personas con al menos una dificultad que tiene certificado de discapacidad
@@ -82,12 +86,13 @@ base_survey |>
   filter(edad > 5 & alguna_dificultad == 'si' ) |> 
   group_by(certificado) %>%
   summarise(prop = round(survey_prop( level = 0.95, 
-                               vartype = 'cv')*100))
+                               vartype = 'cv')*100))|> kableExtra::kable()
 
 ```
+
 Tipo de certificado
 
-```{r}
+```{r tipo_certificado, echo=FALSE}
 #base_survey <- 
   base_survey |> 
   filter(d2a %in% c(1,2) ) |> # 1 es cud, 2 es no cud
@@ -95,9 +100,10 @@ Tipo de certificado
                                       TRUE ~ 'Otro')) |> 
   group_by(tipo_certificado) |> 
   summarise(porcentaje = round(survey_prop( level = 0.95, 
-                               vartype = 'cv')*100))
+                               vartype = 'cv')*100))|> kableExtra::kable()
 
 ```
+
 De las personas con certificado (91 mil), el 85% (78 mil) de las personas tiene CUD
 
 ```{r tipo_dificultad, echo=FALSE}
@@ -148,4 +154,3 @@ ggplot(df_plot,
   theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotar etiquetas si fuera necesario
 
 ```
-
