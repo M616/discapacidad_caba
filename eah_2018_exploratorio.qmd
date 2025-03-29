@@ -67,8 +67,11 @@ base_survey |>
   filter(edad > 5 ) |> 
   group_by(alguna_dificultad) %>%
   summarise(prop = round(survey_prop( level = 0.95, 
-                               vartype = 'cv')
-            *100)) |> kableExtra::kable()
+                               vartype = 'cv')*100),
+            Total = survey_total( level = 0.95, 
+                               vartype = 'cv')) |>
+  select(-Total_cv) |> 
+  kableExtra::kable()
 ```
 
 Población mayor a 6. Proporcion de personas con al menos una dificultad que tiene certificado de discapacidad
