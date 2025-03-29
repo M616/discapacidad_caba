@@ -14,9 +14,11 @@ download.file(url = enlace,
 unzip(zipfile = temp_zip, exdir = temp_dir)
 
 archivos_descomprimidos <- list.files(temp_dir, full.names = TRUE)
+archivos_descomprimidos
 
-base <- read_delim(archivos_descomprimidos[4],
-                 delim = ';')
+base <- 
+  read_delim(archivos_descomprimidos[4],
+             delim = ';')
 
 #ponderar con 'fexp'
 #total poblacion
@@ -54,27 +56,48 @@ resultados <- base |>
 print(resultados)
 
 #poblacion con alguna dificultad
-base_survey <- base %>%
+base_survey <- 
+  base %>%
   as_survey(weights = fexp)
 
 #poblacion total
 base_survey %>%
-  group_by(dd_con_dif) %>%
-  summarise(prop = survey_prop())
+  mutate( alguna_dificultad = case_when(dd_con_dif == 1 ~ 'si',
+                                        TRUE ~ 'no')) |> 
+  group_by(alguna_dificultad) %>%
+  summarise(prop = survey_prop()*100)
 
 #mayor a 6total
-base_survey %>%
-  filter(edad > 5) |> 
-  group_by(dd_con_dif) %>%
-  summarise(prop = survey_prop())
+
+base_survey <- 
+  base_survey %>% 
+  mutate( alguna_dificultad = 
+            case_when(dd_con_dif == 1 ~ 'si',
+                      TRUE ~ 'no')) 
+  
+base_survey |> 
+  filter(edad > 5 ) |> 
+  group_by(alguna_dificultad) %>%
+  summarise(prop = survey_prop()*100)
 
 
 ##proporcion de personas con al menos una dificultad que tiene certificado de discapacidad
 #mayor a 6
-base_survey %>%
-  filter(edad > 5 & dd_con_dif == 1 ) |> 
-  group_by(dd15) %>%
-  summarise(prop = survey_prop())
+
+base |> 
+  count(dd15)
+
+base_survey <- 
+  base_survey %>%
+  mutate(certificado = 
+           case_when (dd15 == 1 ~ 'si',
+                      dd15 == 9 ~ NA_character_,
+                      TRUE ~ 'no') )
+  
+base_survey |> 
+  filter(edad > 5 & alguna_dificultad == 'si' ) |> 
+  group_by(certificado) %>%
+  summarise(prop = survey_prop()*100)
 
 #Sólo eel 40% de la población mayor a 6 años con alguna dificultad tiene el CUD 
 
