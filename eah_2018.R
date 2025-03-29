@@ -99,7 +99,66 @@ base_survey |>
   group_by(certificado) %>%
   summarise(prop = survey_prop()*100)
 
-#Sólo eel 40% de la población mayor a 6 años con alguna dificultad tiene el CUD 
+#el cud no es el unico certificado
+#Sólo eel 40% de la población mayor a 6 años con alguna dificultad tiene 
+#algún tipo de certificado de discapacidad. 
+
+#### tipo dificultad
+base_survey <- 
+  base_survey |> 
+  filter( dd_tipo_dif != 0  ) |> 
+  mutate(tipo_dificultad = case_when( dd_tipo_dif == 1  ~ 'Sólo dificultad motora',
+                                      dd_tipo_dif == 2  ~ 'Sólo dificultad visual',
+                                      dd_tipo_dif == 3  ~ 'Sólo dificultad auditiva',
+                                      dd_tipo_dif == 4  ~ 'Sólo dificultad del habla y comunicación',
+                                      dd_tipo_dif == 5  ~ 'Sólo dificultad mental cognitiva',
+                                      dd_tipo_dif == 6  ~ 'Sólo dificultad del cuidado de sí mismo',
+                                      dd_tipo_dif == 7  ~ 'Sólo certificado de discapacidad',
+                                      dd_tipo_dif == 8  ~ '2 dificultades',
+                                      dd_tipo_dif == 9  ~ '3 o más dificltades'))
+
+
+# Crear tabla de frecuencias respetando el diseño muestral
+df_plot <- 
+  as.data.frame(svytable(~tipo_dificultad, 
+                         design = base_survey))
+
+colnames(df_plot) <- c("tipo_dificultad", "n")
+
+# Calcular porcentaje
+df_plot <- df_plot %>%
+  mutate(percentage = (n / sum(n)) * 100) %>%  # Convertir a porcentaje
+  arrange(desc(n))
+
+# Crear el gráfico
+ggplot(df_plot, 
+       aes(y = reorder(tipo_dificultad, n),
+           x = n, 
+           fill = tipo_dificultad)) +
+  geom_bar(stat = "identity", show.legend = FALSE) +
+  geom_text(aes(label = paste0(round(percentage), "%")),  # Etiquetas con porcentaje
+            hjust = -0.1, size = 5)+
+  scale_fill_viridis_d() +  
+  labs(
+    title = "Distribución de Tipos de Dificultades",
+    y = "Tipo de Dificultad",
+    x = "Cantidad de personas"
+  ) +
+  theme_minimal(base_size = 14) +  # Tema limpio y profesional
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotar etiquetas si fuera necesario
+
+
+
+
+base_survey |> 
+  ggplot()
+
+
+
+
+
+
+
 
 pob_mayor6 <- sum(base[base$edad >= 6, 'fexp'])
 
