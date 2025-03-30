@@ -2,7 +2,7 @@
 title: "EAH 2018 - Módulo discapacidad"
 subtitle: "Análisis exploratorio"
 author: "Marcos May"
-format: html
+format: pdf
 editor: visual
 ---
 
@@ -144,16 +144,22 @@ ggplot(df_plot,
        aes(y = reorder(tipo_dificultad, n),
            x = n, 
            fill = tipo_dificultad)) +
-  geom_bar(stat = "identity", fill = "#003f5c", show.legend = FALSE) +
+  geom_bar(stat = "identity", fill = "#FF3333", show.legend = FALSE) +
   geom_text(aes(label = paste0(round(percentage), "%")),  # Etiquetas con porcentaje
-            hjust = -0.1, size = 5)+
+            hjust = -0.1, size = 3)+
   scale_fill_viridis_d() +  
+    scale_x_continuous(limits = c(0, 70000)) +
   labs(
     title = "Distribución de Tipos de Dificultades",
     y = "Tipo de Dificultad",
     x = "Cantidad de personas"
   ) +
-  theme_economist (base_size = 14) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotar etiquetas si fuera necesario
-
+  theme_minimal () +
+  theme(
+    plot.title = element_text(hjust = 3, face = "bold"),  # Centrar el título
+    axis.text.x = element_text(angle = 45, hjust = 1),  # Rotar etiquetas si es necesario
+    axis.title.y = element_text(margin = margin(r = 15)),  # Separar título del eje Y
+    axis.title.x = element_text(margin = margin(t = 10)),  # Separar título del eje X
+    axis.text.y = element_text(hjust = 0.5)  # Centrar etiquetas del eje Y
+  )
 ```
