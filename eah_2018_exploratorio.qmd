@@ -2,7 +2,7 @@
 title: "EAH 2018 - Módulo discapacidad"
 subtitle: "Análisis exploratorio"
 author: "Marcos May"
-format: pdf
+format: html
 editor: visual
 ---
 
@@ -164,19 +164,19 @@ ggplot(df_plot,
   )
 ```
 
-Porcentaje de personas con dificultades que no pueden valerse por sí mismos (dd9)
+## '¿Recibe la asistencia o la ayuda que necesita habitualmente de otra persona?' (d15)
 
 ```{r , echo=FALSE}
 
 base_survey <- 
   base_survey %>%
-  mutate(dificultad_cuidados = case_when(dd9 > 2 ~ 'si',
+  mutate(necesidad_asistencia = case_when(d15 == 1 ~ 'si',
                                          TRUE ~ 'no'))
   
   
 base_survey %>% 
-  filter(alguna_dificultad == 'si' ) %>% 
-  group_by(dificultad_cuidados ) %>% 
+  filter(d15 != 0 ) %>% 
+  group_by(necesidad_asistencia ) %>% 
   summarise(porcentaje = round(survey_prop( level = 0.95, 
                                vartype = 'cv')*100),
             Total = survey_total(level = 0.95,
@@ -185,14 +185,14 @@ base_survey %>%
 
 ```
 
-Personas con dificultad para valerse por si mismas sobre el total poblacional.
+Personas que necesitan asistencia el total poblacional.
 
 ```{r , echo=FALSE}
 
 base_survey %>% 
-  group_by(dificultad_cuidados ) %>% 
+  group_by(necesidad_asistencia ) %>% 
   summarise(porcentaje = round(survey_prop( level = 0.95, 
-                               vartype = 'cv')*100),
+                               vartype = 'cv')*100,3),
             Total = survey_total(level = 0.95,
                                  vartype = 'cv' )) %>% 
   kableExtra::kable()
@@ -200,3 +200,23 @@ base_survey %>%
 
 ```
 
+Personas que necesitan asistencia mayores de 5 años
+
+```{r , echo=FALSE}
+
+base_survey %>% 
+  filter(edad > 5) |> 
+  group_by(necesidad_asistencia ) %>% 
+  summarise(porcentaje = round(survey_prop( level = 0.95, 
+                               vartype = 'cv')*100,3),
+            Total = survey_total(level = 0.95,
+                                 vartype = 'cv' )) %>% 
+  kableExtra::kable()
+
+
+```
+
+
+## Personas con necesidad asistencia por edad
+
+personas con necesidad asistenica con certificado discapacidad ver cud
