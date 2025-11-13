@@ -216,7 +216,6 @@ base_survey %>%
 
 ```
 
-
 ## Personas con necesidad asistencia por edad
 
 personas con necesidad asistenica con certificado discapacidad ver cud
