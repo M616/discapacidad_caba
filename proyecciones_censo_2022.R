@@ -1,7 +1,7 @@
-library(httr)
+{library(httr)
 library(tidyverse)
 library(readxl)
-
+}
 
 url <- "https://www.indec.gob.ar/ftp/cuadros/poblacion/proyecciones_jurisdicciones_2022_2040_c1.xlsx"
 
@@ -25,3 +25,9 @@ proyecciones <- read_excel("data/censo_2022/proyecciones_poblacion_INDEC.xlsx",
                                            sheet = "02-CABA", range = "a5:d24")
 
 caba_2025 <- proyecciones[proyecciones$Año == 2025, 2][[1]]
+
+
+
+## esta proporcion sale del estudio sobre poblacion con discapacidad
+##de indec, ver el otro scripts
+0.094 * caba_2025
