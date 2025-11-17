@@ -31,3 +31,7 @@ caba_2025 <- proyecciones[proyecciones$Año == 2025, 2][[1]]
 ## esta proporcion sale del estudio sobre poblacion con discapacidad
 ##de indec, ver el otro scripts
 0.094 * caba_2025
+
+## esto tomando 0.6 % (todos somos todos, pagina33)
+0.006 * caba_2025
+
