@@ -1,8 +1,7 @@
 {library(tidyverse)
 library(survey)
 library(srvyr)
-  library(ggthemes)
-}
+  library(ggthemes)}
 
 enlace <- 'https://www.estadisticaciudad.gob.ar/eyc/wp-content/uploads/2019/12/eah2018_bu_ampliada.zip'
 temp_dir <- tempdir()
