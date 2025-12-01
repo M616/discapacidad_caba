@@ -1,7 +1,7 @@
 {library(tidyverse)
 library(survey)
 library(srvyr)
-  library(ggthemes)}
+library(ggthemes)}
 
 enlace <- 'https://www.estadisticaciudad.gob.ar/eyc/wp-content/uploads/2019/12/eah2018_bu_ampliada.zip'
 temp_dir <- tempdir()
@@ -20,6 +20,7 @@ base <-
   read_delim(archivos_descomprimidos[4],
              delim = ';')
 
+
 #ponderar con 'fexp'
 #total poblacion
 diseño <- svydesign(ids = ~1,    # si no tienes conglomerados, usa ~1
@@ -29,6 +30,13 @@ diseño <- svydesign(ids = ~1,    # si no tienes conglomerados, usa ~1
 
 
 prop.table(svytable(~dd_con_dif, diseño))*100
+# aproximadamente el 7.5% de la poblacion de caba en 2018 
+# padece discapacidad
+
+##resultados por comuna (cuidado con la lectura de estos resultados)
+prop.table(svytable(~dd_con_dif + comuna, diseño), margin = 2) * 100
+
+
 
 #poblacion mayor a 6
 diseño6 <- svydesign(ids = ~1,    # si no tienes conglomerados, usa ~1
