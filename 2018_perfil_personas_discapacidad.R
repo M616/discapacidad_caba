@@ -126,3 +126,11 @@ cud <-  svymean(~I(certificado == 1),
         subset(disenio,dificultad_6ymas == 1 & dificultades == 3))
 
 eval_calidad_indec(cud)
+
+
+
+####ver variable pc03, hay una categoria que dice causa disca
+#probablemente asociado a vejez
+
+##ver que pasa en los hogares con mas de dos personas con discapacidad, 
+#serian los prioritarios?
