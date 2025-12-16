@@ -65,6 +65,11 @@ base$d4n_f <- factor(
   )
 )
 
+
+##porcentaje de la poblacion con mas de 3 necesidades
+base$alta_necesidad_apoyo_3mas <- base$dd_tipo_dif == 9
+
+
 disenio <- svydesign(ids = ~1,    # se usa ~1 si no hay conglomerados
                     weights = ~fexp,    # columna de factores de expansión
                     data = base)
@@ -106,6 +111,19 @@ svymean(~alta_necesidad_apoyo_cons,
 
 #dentro de la poblacion con discapacidad mayor a 6 años, porcentaje de altas necesidades de apoyo
 svymean(~alta_necesidad_apoyo_cons, disenio_pcd_6mas, na.rm = TRUE)
+
+##porcentaje de la poblacion con mas de 3 necesidades
+svymean(
+  ~alta_necesidad_apoyo_3mas,
+  subset(disenio, edad >= 6 ),
+  na.rm = TRUE
+)
+
+svymean(
+  ~I(dd_tipo_dif == 9),
+  subset(disenio, edad >= 6 ),
+  na.rm = TRUE
+)
 
 ###pruebo a abrir por comuna, tiene baja precisión
 res_comuna <- svyby(
