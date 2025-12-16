@@ -41,5 +41,5 @@ caba_2025 <- proyecciones[proyecciones$Año == 2025, 2][[1]]
 
 ## esto tomando 1.5 según escenario conservador calculado a partir
 #de eah2018
-0.015 * caba_2025
+0.015 * (caba_2025*0.948)
 
