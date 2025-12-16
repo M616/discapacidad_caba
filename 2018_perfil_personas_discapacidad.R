@@ -62,35 +62,67 @@ round(dificultad_total[1]*100,1)
 svymean(~dificultad_6ymas,
         subset(disenio, !is.na(dificultad_6ymas)))
 
+#0.10178
+
 
 ### pregunta dificultades, aca voy a tomar los que tienen mas de 
 ##3 dificultades como proxy de discapacidad intelectual
 
 #total de personas con 3 dificultades o mas
-svytotal(~I(dificultades == 3),
-         subset(disenio, !is.na(dificultades)))
-
-
-#porcentaje de personas con 3 dificultades o mas
-svymean(~I(dificultades == 3),
-        subset(disenio, !is.na(dificultades)))
+#svytotal(~I(dificultades == 3),
+#         subset(disenio, !is.na(dificultades)))
 
 
 
-### dentro de los que tienen dificultade == 3, o sea, los que tienen 
-#mas de 3 dificultades, calculo el procentaje de personas con 
-# certificado de discapacidad
 
-svymean(
-  ~I(certificado == 1),
-  subset(disenio, dificultades == 3 & !is.na(certificado))
+#porcentaje de personas con 3 dificultades o mas sobre personas con dificultades, conservador
+ana_conservador_prop <- 
+  svymean(~I(dificultades == 3),
+        subset(disenio, dificultad_6ymas == 1 ))
+
+ana_conservador_prop
+
+
+###escenario central
+ana_ampliado_prop <- 
+  svymean(~I(
+  dificultades == 3 |
+    (tipo_dificultad %in% c(4, 5, 6) )), subset(disenio, dificultad_6ymas == 1)
 )
 
+ana_ampliado_prop
 
 
 
-#falta ponderar
-base |> count(hogar_dificultad )
-base |> count(dificultad_total)
-base |> count(dificultad_6ymas )
-base |> count(tipo_dificultad)
+#--------------------------------------------------
+# Función para evaluar calidad de estimaciones INDEC
+#--------------------------------------------------
+eval_calidad_indec <- function(est_obj) {
+  
+  est <- coef(est_obj)[2]       # proporción TRUE
+  se  <- SE(est_obj)[2]
+  cv  <- se / est
+  
+  calidad <- case_when(
+    cv > 0.333 ~ "No confiable",
+    cv > 0.166 ~ "Poco confiable",
+    TRUE       ~ "Confiable"
+  )
+  
+  tibble(
+    estimacion = est,
+    ee = se,
+    cv = cv,
+    calidad = calidad
+  )
+}
+
+
+eval_calidad_indec(ana_conservador_prop)
+eval_calidad_indec(ana_ampliado_prop)
+
+###de las personas del escenario conservador, que proporcion tiene cudcertificado(¿unico?)
+cud <-  svymean(~I(certificado == 1),
+        subset(disenio,dificultad_6ymas == 1 & dificultades == 3))
+
+eval_calidad_indec(cud)

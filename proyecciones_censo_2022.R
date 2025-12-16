@@ -32,6 +32,11 @@ caba_2025 <- proyecciones[proyecciones$Año == 2025, 2][[1]]
 ##de indec, ver el otro scripts
 0.094 * caba_2025
 
+##mismo estudio, proporcion estimada de altas necesidades de apoyo = 0.012 (pero 6 años y mas)
+## la poblacion mayor o igual a 6 años es 0.948
+0.012 * (caba_2025*0.948)
+
 ## esto tomando 0.6 % (todos somos todos, pagina33)
 0.006 * caba_2025
+
 
