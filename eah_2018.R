@@ -46,6 +46,26 @@ base <- base |>
     alta_necesidad_apoyo_cons = n_avd_basicas >= 2
   )
 
+###pruebo a abrir por comuna, tiene baja precisión
+res_comuna <- svyby(
+  ~alta_necesidad_apoyo_cons,
+  ~comuna,
+  subset(disenio, edad >= 6),
+  svymean,
+  na.rm = TRUE,
+  vartype = "se"
+)
+
+res_comuna
+
+res_comuna$cv_true <- with(
+  res_comuna,
+  se.alta_necesidad_apoyo_consTRUE /
+    alta_necesidad_apoyo_consTRUE * 100
+)
+
+
+
 
 #ponderar con 'fexp'
 #total poblacion
