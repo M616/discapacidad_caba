@@ -21,16 +21,85 @@ base <-
              delim = ';')
 
 
+#altas necesidades de apoyo segun definicion laxo
+base <- base %>%
+  mutate(
+    alta_necesidad_apoyo_laxo = if_else(
+      d14n_2 == 1 |
+      d14n_3 == 1 |
+      d14n_4 == 1 |
+      d14n_10 == 1,
+      1, 0
+    )
+  )
+
+
+###altas necesidades de apoyo conservador
+base <- base |>
+  mutate(
+    n_avd_basicas =
+      (d14n_2 == 1) +
+      (d14n_3 == 1) +
+      (d14n_4 == 1) +
+      (d14n_10 == 1),
+
+    alta_necesidad_apoyo_cons = n_avd_basicas >= 2
+  )
+
+
 #ponderar con 'fexp'
 #total poblacion
-diseño <- svydesign(ids = ~1,    # si no tienes conglomerados, usa ~1
-                    #strata = ~estrato,   # si tienes estratificación
+disenio <- svydesign(ids = ~1,    # se usa ~1 si no hay conglomerados
                     weights = ~fexp,    # columna de factores de expansión
                     data = base)    # el dataframe con tus datos
 
 
+
+###porcentaje de personas con alta necesidad de apoyo
+svymean(~alta_necesidad_apoyo_laxo,  
+  subset(disenio,
+      edad >= 6),
+      na.rm = TRUE)
+
+#poblacion 6 y más con discapacidad 
+disenio_pcd_6mas <- subset(
+  disenio,
+  dd_con_dif == 1 & edad >= 6
+)
+
+##si hago esto me promedia las categorias de dd_con_dif. esta como numerica, saca el promedio
+svymean(~dd_con_dif,  
+  subset(disenio,
+      edad >= 6),
+      na.rm = TRUE)
+
+svymean(~I(dd_con_dif == 1),
+        subset(disenio, edad >= 6),
+        na.rm = TRUE)
+
+
+
+#dentro de la poblacion con discapacidad mayor a 6 años, porcentaje de altas necesidades de apoyo
+svymean(~alta_necesidad_apoyo_laxo, disenio_pcd_6mas, na.rm = TRUE)
+
+
+
+###porcentaje de personas con alta necesidad de apoyo
+svymean(~alta_necesidad_apoyo_cons,  
+  subset(disenio,
+      edad >= 6),
+      na.rm = TRUE)
+
+#dentro de la poblacion con discapacidad mayor a 6 años, porcentaje de altas necesidades de apoyo
+svymean(~alta_necesidad_apoyo_cons, disenio_pcd_6mas, na.rm = TRUE)
+
+
+
+
+
+
 prop.table(svytable(~dd_con_dif, diseño))*100
-# aproximadamente el 7.5% de la poblacion de caba en 2018 
+# aproximadamente el 7.5% de los hogares
 # padece discapacidad
 
 ##resultados por comuna (cuidado con la lectura de estos resultados)
