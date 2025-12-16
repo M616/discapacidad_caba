@@ -112,6 +112,7 @@ svymean(~alta_necesidad_apoyo_cons,
 #dentro de la poblacion con discapacidad mayor a 6 años, porcentaje de altas necesidades de apoyo
 svymean(~alta_necesidad_apoyo_cons, disenio_pcd_6mas, na.rm = TRUE)
 
+#agrego criterio severidad estructural de la discapacidad
 ##porcentaje de la poblacion con mas de 3 necesidades
 svymean(
   ~alta_necesidad_apoyo_3mas,
