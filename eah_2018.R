@@ -126,6 +126,15 @@ svymean(
   na.rm = TRUE
 )
 
+##porcentaje de la poblacion con discapacidad con más de 3 discapacidades
+svymean(
+    ~I(dd_tipo_dif == 9 ),
+  subset(disenio, edad >= 6 & dd_con_dif == 1  ),
+  na.rm = TRUE
+)
+
+
+
 ###pruebo a abrir por comuna, tiene baja precisión
 res_comuna <- svyby(
   ~alta_necesidad_apoyo_cons,
