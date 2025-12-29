@@ -3,6 +3,8 @@ library(survey)
 library(srvyr)
 library(ggthemes)}
 
+options(scipen = 999)
+
 enlace <- 'https://www.estadisticaciudad.gob.ar/eyc/wp-content/uploads/2019/12/eah2018_bu_ampliada.zip'
 temp_dir <- tempdir()
 temp_zip <- file.path(temp_dir, "archivo_descargado.zip")
@@ -44,6 +46,17 @@ base <- base |>
       (d14n_10 == 1),
 
     alta_necesidad_apoyo_cons = n_avd_basicas >= 2
+  )
+
+
+### altas necesidades de apoyo tomando a todas las personas que 
+### necesitan apoyo en todas las de d14_n
+
+base <- 
+  base |>
+  mutate(
+        alta_necesidad_apoyo_todo_d14 =
+      if_all(starts_with("d14n_") & !ends_with("_11"), ~ .x == 1)
   )
 
 ### motivos por el cual no tienen cud (con altas necesidades de apoyo)
@@ -109,6 +122,14 @@ svymean(~alta_necesidad_apoyo_cons,
       edad >= 6),
       na.rm = TRUE)
 
+###porcentaje de personas con alta necesidad de apoyo, todas las necesidades
+svymean(~alta_necesidad_apoyo_todo_d14,   
+  subset(disenio,
+      edad >= 6),
+      na.rm = TRUE)
+
+
+
 #dentro de la poblacion con discapacidad mayor a 6 años, porcentaje de altas necesidades de apoyo
 svymean(~alta_necesidad_apoyo_cons, disenio_pcd_6mas, na.rm = TRUE)
 
@@ -153,10 +174,10 @@ res_comuna$cv_true <- with(
     alta_necesidad_apoyo_consTRUE * 100
 )
 
-###para ver la poblacion con alta necesidad de apoyo que tiene certificado (conservador)
+###para ver la poblacion con alta necesidad de apoyo que tiene certificado (todo d14_n)
 disenio_ana_cons <- subset(
   disenio,
-  edad >= 6 & alta_necesidad_apoyo_cons == TRUE
+  edad >= 6 & alta_necesidad_apoyo_todo_d14 == TRUE
 )
 
 svymean(
