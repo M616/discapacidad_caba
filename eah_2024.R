@@ -1,15 +1,17 @@
 {library(tidyverse)
 library(survey)
 library(srvyr)
-  library(ggthemes)}
+library(ggthemes)}
 
-enlace <- 'https://www.estadisticaciudad.gob.ar/eyc/wp-content/uploads/2025/07/eah2024_bu_ampliada.zip'
+options(scipen = 999)
+
+enlace <- 'https://www.estadisticaciudad.gob.ar/eyc/wp-content/uploads/2025/04/eah2024_bu_ampliada.zip'
 temp_dir <- tempdir()
 temp_zip <- file.path(temp_dir, "archivo_descargado.zip")
 download.file(url = enlace, 
               destfile = temp_zip, 
-              method = "auto") 
-              #mode = "wb") # 'wb' para Windows, importante para archivos binarios
+              method = "auto", 
+              mode = "wb") # 'wb' para Windows, importante para archivos binarios
 
 unzip(zipfile = temp_zip, exdir = temp_dir)
 
@@ -20,173 +22,204 @@ base <-
   read_delim(archivos_descomprimidos[5],
              delim = ';')
 
-#ponderar con 'fexp'
-#total poblacion
-diseño <- svydesign(ids = ~1,    # si no tienes conglomerados, usa ~1
-                    #strata = ~estrato,   # si tienes estratificación
+
+#altas necesidades de apoyo segun definicion laxo
+base <- base %>%
+  mutate(
+    alta_necesidad_apoyo_laxo = if_else(
+      d14n_2 == 1 |
+      d14n_3 == 1 |
+      d14n_4 == 1 |
+      d14n_10 == 1,
+      1, 0
+    )
+  )
+
+
+###altas necesidades de apoyo conservador
+base <- base |>
+  mutate(
+    n_avd_basicas =
+      (d14n_2 == 1) +
+      (d14n_3 == 1) +
+      (d14n_4 == 1) +
+      (d14n_10 == 1),
+
+    alta_necesidad_apoyo_cons = n_avd_basicas >= 2
+  )
+
+
+### altas necesidades de apoyo tomando a todas las personas que 
+### necesitan apoyo en todas las de d14_n
+
+base <- 
+  base |>
+  mutate(
+        alta_necesidad_apoyo_todo_d14 =
+      if_all(starts_with("d14n_") & !ends_with("_11"), ~ .x == 1)
+  )
+
+### motivos por el cual no tienen cud (con altas necesidades de apoyo)
+
+base$d4n_f <- factor(
+  base$d4n,
+  levels = c(1,2,3,4,5,6,7,8,9,10),
+  labels = c(
+    "No sabe que existe",
+    "No sabe para qué sirve",
+    "No sabe cómo obtenerlo / es complicado",
+    "Le queda lejos el lugar",
+    "No lo quiere",
+    "No lo necesita",
+    "No lo renovó",
+    "Cree que lo puede perjudicar",
+    "Se lo denegaron",
+    "Otro motivo"
+  )
+)
+
+
+##porcentaje de la poblacion con mas de 3 necesidades
+base$alta_necesidad_apoyo_3mas <- base$dd_tipo_dif == 9
+
+
+disenio <- svydesign(ids = ~1,    # se usa ~1 si no hay conglomerados
                     weights = ~fexp,    # columna de factores de expansión
-                    data = base)    # el dataframe con tus datos
+                    data = base)
+
+###porcentaje de personas con alta necesidad de apoyo
+svymean(~alta_necesidad_apoyo_laxo,  
+  subset(disenio,
+      edad >= 6),
+      na.rm = TRUE)
+
+#poblacion 6 y más con discapacidad 
+disenio_pcd_6mas <- subset(
+  disenio,
+  dd_con_dif == 1 & edad >= 6
+)
+
+##si hago esto me promedia las categorias de dd_con_dif. esta como numerica, saca el promedio
+svymean(~dd_con_dif,  
+  subset(disenio,
+      edad >= 6),
+      na.rm = TRUE)
+
+svymean(~I(dd_con_dif == 1),
+        subset(disenio, edad >= 6),
+        na.rm = TRUE)
 
 
 
-#la encuesta 2024 no tiene el modulo por discapacidad publicado
-prop.table(svytable(~dd_con_dif, diseño))*100
-
-#poblacion mayor a 6
-diseño6 <- svydesign(ids = ~1,    # si no tienes conglomerados, usa ~1
-                    #strata = ~estrato,   # si tienes estratificación
-                    weights = ~fexp,    # columna de factores de expansión
-                    data = base[base$edad >=6,])    # el dataframe con tus datos
+#dentro de la poblacion con discapacidad mayor a 6 años, porcentaje de altas necesidades de apoyo
+svymean(~alta_necesidad_apoyo_laxo, disenio_pcd_6mas, na.rm = TRUE)
 
 
 
-prop.table(svytable(~dd_con_dif, diseño6))*100
-svyby(~dd_con_dif,by = ~comuna, design = diseño6,FUN = svymean)
+###porcentaje de personas con alta necesidad de apoyo
+svymean(~alta_necesidad_apoyo_cons,  
+  subset(disenio,
+      edad >= 6),
+      na.rm = TRUE)
 
-
-# Calcular el porcentaje de 'fexp' dentro de cada comuna para cada 'dd_con_dif'
-resultados <- base |> 
-  filter(edad >= 6) |>  # Filtrar las edades mayores o iguales a 6
-  group_by(comuna, dd_con_dif) |>  # Agrupar por 'comuna' y 'dd_con_dif'
-  summarise(suma_fexp = sum(fexp), .groups = "drop") |>  # Calcular la suma de 'fexp' por grupo
-  group_by(comuna) |>  # Agrupar nuevamente por 'comuna' para calcular el total dentro de la comuna
-  mutate(total_fexp_comuna = sum(suma_fexp)) |>  # Calcular el total de 'fexp' por comuna
-  mutate(porcentaje = (suma_fexp / total_fexp_comuna) * 100) |>  # Calcular el porcentaje
-  select(comuna, dd_con_dif, porcentaje)  # Seleccionar las columnas de interés
-
-# Mostrar los resultados
-print(resultados)
-
-#poblacion con alguna dificultad
-base_survey <- 
-  base %>%
-  as_survey(weights = fexp)
-
-#poblacion total
-base_survey <- 
-  base_survey %>%
-  mutate( alguna_dificultad = case_when(dd_con_dif == 1 ~ 'si',
-                                        TRUE ~ 'no')) 
-
-base_survey |> 
-  group_by(alguna_dificultad) %>%
-  summarise(prop = survey_prop(level = 0.95, 
-                               vartype = 'cv')
-            *100)
-
-#mayor a 6total
-
-base_survey <- 
-  base_survey %>% 
-  mutate( alguna_dificultad = 
-            case_when(dd_con_dif == 1 ~ 'si',
-                      TRUE ~ 'no')) 
-  
-base_survey |> 
-  filter(edad > 5 ) |> 
-  group_by(alguna_dificultad) %>%
-  summarise(prop = survey_prop()*100)
-
-
-##proporcion de personas con al menos una dificultad que tiene certificado de discapacidad
-#mayor a 6
-
-base |> 
-  count(dd15)
-
-base_survey <- 
-  base_survey %>%
-  mutate(certificado = 
-           case_when (dd15 == 1 ~ 'si',
-                      dd15 == 9 ~ NA_character_,
-                      TRUE ~ 'no') )
-  
-base_survey |> 
-  filter(edad > 5 & alguna_dificultad == 'si' ) |> 
-  group_by(certificado) %>%
-  summarise(prop = survey_prop()*100)
-
-#el cud no es el unico certificado
-#Sólo eel 40% de la población mayor a 6 años con alguna dificultad tiene 
-#algún tipo de certificado de discapacidad. 
-
-#### tipo certificado ####
-#base_survey <- 
-  base_survey |> 
-  filter(d2a %in% c(1,2) ) |> 
-  group_by(d2a) |> 
-  summarise(total = survey_total(),
-            porcentaje = survey_prop()*100)
-
-## de las personas con certificado (91 mil), el 85% (78 mil) de las personas tiene CUD
-
-
-df_plot <- 
-  as.data.frame(svytable(~tipo_dificultad, 
-                         design = base_survey))
-
-colnames(df_plot) <- c("tipo_dificultad", "n")
+###porcentaje de personas con alta necesidad de apoyo, todas las necesidades
+svymean(~alta_necesidad_apoyo_todo_d14,   
+  subset(disenio,
+      edad >= 6),
+      na.rm = TRUE)
 
 
 
-#### tipo dificultad
-base_survey <- 
-  base_survey |> 
-  filter( dd_tipo_dif != 0  ) |> 
-  mutate(tipo_dificultad = case_when( dd_tipo_dif == 1  ~ 'Sólo dificultad motora',
-                                      dd_tipo_dif == 2  ~ 'Sólo dificultad visual',
-                                      dd_tipo_dif == 3  ~ 'Sólo dificultad auditiva',
-                                      dd_tipo_dif == 4  ~ 'Sólo dificultad del habla y comunicación',
-                                      dd_tipo_dif == 5  ~ 'Sólo dificultad mental cognitiva',
-                                      dd_tipo_dif == 6  ~ 'Sólo dificultad del cuidado de sí mismo',
-                                      dd_tipo_dif == 7  ~ 'Sólo certificado de discapacidad',
-                                      dd_tipo_dif == 8  ~ '2 dificultades',
-                                      dd_tipo_dif == 9  ~ '3 o más dificultades'))
+#dentro de la poblacion con discapacidad mayor a 6 años, porcentaje de altas necesidades de apoyo
+svymean(~alta_necesidad_apoyo_cons, disenio_pcd_6mas, na.rm = TRUE)
+
+#agrego criterio severidad estructural de la discapacidad
+##porcentaje de la poblacion con mas de 3 necesidades
+svymean(
+  ~alta_necesidad_apoyo_3mas,
+  subset(disenio, edad >= 6 ),
+  na.rm = TRUE
+)
+
+svymean(
+  ~I(dd_tipo_dif == 9),
+  subset(disenio, edad >= 6 ),
+  na.rm = TRUE
+)
+
+##porcentaje de la poblacion con discapacidad con más de 3 discapacidades
+svymean(
+    ~I(dd_tipo_dif == 9 ),
+  subset(disenio, edad >= 6 & dd_con_dif == 1  ),
+  na.rm = TRUE
+)
 
 
 
-###### tipo de dificultad ####
+###pruebo a abrir por comuna, tiene baja precisión
+res_comuna <- svyby(
+  ~alta_necesidad_apoyo_cons,
+  ~comuna,
+  subset(disenio, edad >= 6),
+  svymean,
+  na.rm = TRUE,
+  vartype = "se"
+)
 
-df_plot <- 
-  as.data.frame(svytable(~tipo_dificultad, 
-                         design = base_survey))
+res_comuna
 
-colnames(df_plot) <- c("tipo_dificultad", "n")
+res_comuna$cv_true <- with(
+  res_comuna,
+  se.alta_necesidad_apoyo_consTRUE /
+    alta_necesidad_apoyo_consTRUE * 100
+)
 
-# Calcular porcentaje
-df_plot <- df_plot %>%
-  mutate(percentage = (n / sum(n)) * 100) %>%  # Convertir a porcentaje
-  arrange(desc(n))
+###para ver la poblacion con alta necesidad de apoyo que tiene certificado (todo d14_n)
+disenio_ana_cons <- subset(
+  disenio,
+  edad >= 6 & alta_necesidad_apoyo_todo_d14 == TRUE
+)
 
-# Crear el gráfico
-ggplot(df_plot, 
-       aes(y = reorder(tipo_dificultad, n),
-           x = n, 
-           fill = tipo_dificultad)) +
-  geom_bar(stat = "identity", fill = "#003f5c", show.legend = FALSE) +
-  geom_text(aes(label = paste0(round(percentage), "%")),  # Etiquetas con porcentaje
-            hjust = -0.1, size = 5)+
-  scale_fill_viridis_d() +  
-  labs(
-    title = "Distribución de Tipos de Dificultades",
-    y = "Tipo de Dificultad",
-    x = "Cantidad de personas"
-  ) +
-  theme_economist (base_size = 14) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotar etiquetas si fuera necesario
+svymean(
+  ~factor(dd15),
+  disenio_ana_cons,
+  na.rm = TRUE
+)
+#Al desagregar el escenario conservador de altas necesidades de apoyo según tenencia del 
+# Certificado Único de Discapacidad, se observa que el 44,6% cuenta con CUD vigente (CV=9,0%),
+#  mientras que un 49,6% no posee CUD (CV=8,1%). Los grupos con certificado vencido
+#  (1,8%; CV=58,7%) o en trámite (4,0%; CV=38,3%) presentan coeficientes de variación 
+# elevados, asociados a su baja frecuencia relativa, por lo que sus estimaciones deben 
+# interpretarse con cautela. Estos resultados evidencian una brecha relevante entre 
+# la necesidad de apoyos intensivos y el acceso efectivo al reconocimiento 
+# administrativo de la discapacidad.
 
 
 
 
+disenio_ana_cons_sin_cud <- subset(
+  disenio,
+  edad >= 6 &
+  alta_necesidad_apoyo_cons == TRUE &
+  dd15 != 1
+)
 
 
+res_d4n <- svymean(
+  ~d4n_f,
+  disenio_ana_cons_sin_cud,
+  na.rm = TRUE
+)
+res_d4n 
+
+tabla_d4n <- data.frame(
+  motivo = names(coef(res_d4n)),
+  prop   = coef(res_d4n),
+  se     = SE(res_d4n)
+)
+
+tabla_d4n$cv <- tabla_d4n$se / tabla_d4n$prop * 100
+
+tabla_d4n
 
 
-
-pob_mayor6 <- sum(base[base$edad >= 6, 'fexp'])
-
-base[base$dif]
-base |> count(hogar_dificultad )
-base |> count(dificultad_total)
-base |> count(dificultad_6ymas )
-base |> count(tipo_dificultad)
