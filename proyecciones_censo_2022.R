@@ -43,3 +43,8 @@ caba_2025 <- proyecciones[proyecciones$Año == 2025, 2][[1]]
 #de eah2018
 0.015 * (caba_2025*0.948)
 
+#eah2018 (tiene sentido hacerlo?)
+0.003 * (caba_2025) #sobre el total poblacional, inlcuídas las persoans menores de 6 años
+
+#eah2024 
+0.002 * (caba_2025) #sobre el total poblacional, inlcuídas las persoans menores de 6 años
