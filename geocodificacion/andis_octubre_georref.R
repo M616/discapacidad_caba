@@ -16,7 +16,9 @@ library(openxlsx)
 dir.create('data')
 #drive_download('https://docs.google.com/spreadsheets/d/1sAfzu82spdX3bNjg7vS0wRQrnoIIuAOh/edit?usp=sharing&ouid=118184938313502858180&rtpof=true&sd=true', path = 'data/CUD vigentes residentes en CABA anonimizada 1-10-2025.xlsx')
 
-base <- read.xlsx('data/cud_anonimizada_octubre25.xlsx', 
+base <- read.xlsx(
+  #'data/cud_anonimizada_octubre25.xlsx',
+  'data/CUD vigentes residentes en CABA anonimizada 1-10-2025.xlsx', 
 #rows = 1:2,
 cols = 1:3,
 startRow = 2,
@@ -30,9 +32,9 @@ names(base) <- c('id', 'altura', 'calle')
 #base$id <- as.integer(base$id)
 
 
-bloque_size <- 100 
-#n <- nrow(base)
-n <- 100
+bloque_size <- 500 
+n <- nrow(base)
+#n <- 100
 bloques <- ceiling(n / bloque_size)
 respuestas <- list()
 
@@ -168,15 +170,15 @@ base2 <-
   right_join(resultados_largos,
             by = 'id')
 
-base <- 
-  st_as_sf(base,
+base2 <- 
+  st_as_sf(base2,
          coords = c('lon_georef',
                     'lat_georef'),
          na.fail = FALSE,
          remove = FALSE)
 
-base <- 
-  st_set_crs(base, 4326)
+base2 <- 
+  st_set_crs(base2, 4326)
 
 #inmo |> 
 #  filter(!st_is_empty(geometry)) |> 
@@ -185,12 +187,12 @@ base <-
 ##estos son los que tengo que ver de que localidades son
 sum(duplicated(base$id))
 
-base_filtrado <- 
-  base |> 
+base2 <- 
+  base2 |> 
   filter(!st_is_empty(geometry))
 
 
-mapview(base)
+mapview(base2)
 #####################
 
 
