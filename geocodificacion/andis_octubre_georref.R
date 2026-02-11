@@ -128,7 +128,7 @@ resultados_largos <- map_dfr(respuestas, function(res) {
   
   if (is.null(res)) return(NULL)  # bloque vacío
   
-  ids_bloque <- res$resultados$id
+  ids_bloque <- as.integer (res$resultados$id)
   direcciones <- res$resultados$direcciones
   
   map2_dfr(direcciones, ids_bloque, function(df_dir, id) {
