@@ -22,7 +22,12 @@ cols = 1:3,
 startRow = 2,
 colNames = FALSE)
 
+#base <- base |> st_drop_geometry()
+#base <- base[,1:3]
+
 names(base) <- c('id', 'altura', 'calle')
+
+#base$id <- as.integer(base$id)
 
 
 bloque_size <- 100 
@@ -108,7 +113,7 @@ for (i in seq_len(bloques)) {
   
   
   respuestas[[i]] <- result
-  respuestas[[i]]$resultados$id <- ids_bloque
+  respuestas[[i]]$resultados$id <- as.integer (ids_bloque)
   toc(log = TRUE)  # ⏱ FIN medición + guarda en log
   Sys.sleep(0.5)
 }
@@ -140,13 +145,13 @@ resultados_largos <- map_dfr(respuestas, function(res) {
     } else {
       df_dir %>%
         mutate(
-          listing_id = id,
+          id = id,
           direccion_georef = nomenclatura,  
           lon_georef = ubicacion_lon,
           lat_georef = ubicacion_lat,
           localidad_censal = localidad_censal_nombre
         ) %>%
-        select(listing_id, direccion_georef, lon_georef, lat_georef, localidad_censal)
+        select(id, direccion_georef, lon_georef, lat_georef)
     }
   })
 })
@@ -157,9 +162,10 @@ save(resultados_largos, file = 'data/georef/resultados_largos_max1.Rda')
 #load('data/georef/resultados_largos.Rda')
 #load('data/inmo.Rda')
 
-base <- 
+base2 <- 
   base |> 
-  left_join(resultados_largos,
+  #left_join(resultados_largos,
+  right_join(resultados_largos,
             by = 'id')
 
 base <- 
@@ -179,7 +185,12 @@ base <-
 ##estos son los que tengo que ver de que localidades son
 sum(duplicated(base$id))
 
+base_filtrado <- 
+  base |> 
+  filter(!st_is_empty(geometry))
 
+
+mapview(base)
 #####################
 
 
