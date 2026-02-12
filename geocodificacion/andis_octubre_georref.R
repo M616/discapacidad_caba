@@ -161,14 +161,17 @@ resultados_largos <- map_dfr(respuestas, function(res) {
 #save(resultados_largos, file = 'data/georef/resultados_largos.Rda')
 save(resultados_largos, file = 'data/georef/resultados_largos_max1.Rda')
 
-#load('data/georef/resultados_largos.Rda')
-#load('data/inmo.Rda')
+load('data/georef/resultados_largos_max1.Rda')
+
 
 base2 <- 
   base |> 
   #left_join(resultados_largos,
   right_join(resultados_largos,
             by = 'id')
+
+
+base2$id <- as.integer(base2$id)
 
 base2 <- 
   st_as_sf(base2,
@@ -179,6 +182,9 @@ base2 <-
 
 base2 <- 
   st_set_crs(base2, 4326)
+
+st_write(base2, '/home/marcos/Documentos/discapacidad_caba/data/georef/base2.gpkg')
+
 
 #inmo |> 
 #  filter(!st_is_empty(geometry)) |> 
