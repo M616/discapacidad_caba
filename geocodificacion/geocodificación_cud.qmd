@@ -5,6 +5,6 @@ format: html
 
 Sugerencias sobre carga formulario cud:
 
-+ No se está cargando piso y departamento, solo se está cargando calle y altura. Se sugiere incorporarlo al formulario.
++ No se está cargando piso y departamento, solo se está cargando calle y altura. Se sugiere incorporarlo al formulario. No me queda claro de donde sale el dato del calle y numero, ya que en el formulario solo se releva domicilio (una sola variable)
 + Aproximadamente el 80% de los registros matchea con georef, sin saber los falsos positivos. Se sugiere que el operador cargue la dirección y el sistema le muestre la ubicación geográfica, para que el operador pueda validar si es correcta o no.
 
