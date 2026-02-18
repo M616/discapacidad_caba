@@ -91,6 +91,42 @@ saveRDS(tabla_mapa, "data/processed/tabla_mapa.rds")
 
 tabla_mapa <- readRDS("data/processed/tabla_mapa.rds")
 
+server <- function(input, output, session) {
+  
+  output$mapa <- renderLeaflet({
+    
+    variable <- tabla_mapa[[input$indicador]]
+    
+    pal <- colorNumeric(
+      palette = "Blues",
+      domain = variable,
+      na.color = "#f0f0f0"
+    )
+    
+    leaflet(tabla_mapa) %>%
+      addProviderTiles(providers$CartoDB.Positron) %>%
+      addPolygons(
+        fillColor = ~pal(tabla_mapa[[input$indicador]]),
+        weight = 1,
+        color = "white",
+        fillOpacity = 0.8,
+        popup = ~paste0(
+          "<strong>", comuna, "</strong><br>",
+          input$indicador, ": ",
+          round(tabla_mapa[[input$indicador]], 1)
+        )
+      ) %>%
+      addLegend(
+        "bottomright",
+        pal = pal,
+        values = variable,
+        title = input$indicador
+      )
+  })
+  
+}
+
+
 ui <- navbarPage(
   "Indicadores territoriales - Personas con CUD en CABA",
   
