@@ -122,9 +122,8 @@ for (i in seq_len(bloques)) {
 
 
 dir.create('data/georef')
-#save(respuestas, file = 'data/georef/respuestas_sm.Rda')
-save(respuestas, file = 'data/georef/respuestas_max1.Rda')
-#load('data/georef/respuestas_sm.Rda')
+#save(respuestas, file = 'data/georef/respuestas_max1.Rda')
+load('data/georef/respuestas_max1.Rda')
 
 resultados_largos <- map_dfr(respuestas, function(res) {
   
@@ -161,7 +160,7 @@ resultados_largos <- map_dfr(respuestas, function(res) {
 #save(resultados_largos, file = 'data/georef/resultados_largos.Rda')
 save(resultados_largos, file = 'data/georef/resultados_largos_max1.Rda')
 
-#load('data/georef/resultados_largos.Rda')
+load('data/georef/resultados_largos_max1.Rda')
 #load('data/inmo.Rda')
 
 base2 <- 
@@ -180,100 +179,12 @@ base2 <-
 base2 <- 
   st_set_crs(base2, 4326)
 
-#inmo |> 
-#  filter(!st_is_empty(geometry)) |> 
-#  mapview()
+prop.table(table(st_is_empty(base2$geometry)))*100
 
-##estos son los que tengo que ver de que localidades son
-sum(duplicated(base$id))
-
-base2 <- 
-  base2 |> 
-  filter(!st_is_empty(geometry))
+st_write(base2, 'data/georef/base2_georef.gpkg')
+#base2 <- 
+#  base2 |> 
+#  filter(!st_is_empty(geometry))
 
 
-mapview(base2)
-#####################
-
-
-library(tidygeocoder)
-library(geoAr)
-
-bbox_sm <-
-  geoAr::get_geo('BUENOS AIRES') |>
-  filter(coddepto_censo == 760) |>
-  st_bbox()
-
-bbox_string <-
-  paste(bbox_sm[c("xmin",
-                      "ymin",
-                      "xmax",
-                      "ymax")],
-        collapse = ",")
-
-
-
-nominatim <-
-  inmo |> 
-  filter(is.na(geocodificador)) |> 
-  mutate(direccion_simple = paste0(direccion_limpia,
-                                   ', ',
-                                   'Mar del Plata',
-                                   ', ',
-                                   'Argentina')) |> 
-
-  tidygeocoder::geocode(address = direccion_limpia,
-                        limit = 1,
-                        method = "osm",
-                        full_results = TRUE,
-                        custom_query = list(
-                          viewbox = bbox_string ,
-                          bounded = 1
-                        ))
-save(nominatim, file = here('data/nominatim.Rda'))
-
-nominatim_filtrado <-
-  nominatim |>
-  dplyr::filter( type == 'house',
-                 class == 'place')
-
-#####solo 173 observaciones con nominatim, pruebo mapbox
-mapbox <-
-  inmo |> 
-  filter(is.na(geocodificador)) |> 
-  mutate(direccion_simple = paste0(direccion_limpia,
-                                   ', ',
-                                   'Mar del Plata',
-                                   ', ',
-                                   'Argentina')) |> 
-  
-  tidygeocoder::geocode(address = direccion_limpia,
-                        limit = 1,
-                        method = "mapbox",
-                        full_results = TRUE,
-                        custom_query = list(
-                          bbox = bbox_string,
-                          types = "address"
-                        ))
-save(mapbox, file = here('data/mapbox.Rda'))
-
-
-#relevance. Fuente chatgpt
-#Es un valor numérico entre 0 y 1.
-#Cuanto más cercano a 1, mayor coincidencia entre la cadena de texto que geocodificaste 
-#(la dirección original) y el resultado encontrado.
-#Está calculado en función de varios factores:
-#Coincidencia de texto (por ejemplo, si escribiste “Calle Falsa 123” y existe exactamente esa calle).
-#Nivel jerárquico correcto (por ejemplo, la localidad y el país coinciden).
-#Tipo de entidad (por ejemplo, si buscabas una dirección y encontró una calle o barrio, 
-#la relevancia será menor).
-
-summary(mapbox$relevance)
-
-mapbox |> 
-  filter(relevance < 0.6) |> 
-  select(direccion_limpia)
-
-
-
-
+#mapview(base2)
