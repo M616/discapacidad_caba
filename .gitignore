@@ -23,7 +23,6 @@ data/CUD vigentes residentes en CABA anonimizada 1-10-2025.xlsx
 data/georef/resultados_largos_max1.Rda
 data/georef/base2.gpkg
 base2.gpkg
-geocodificacion/tablero_geocod.R
 data/georef/base2_georef.gpkg
 renv/.gitignore
 renv/activate.R
