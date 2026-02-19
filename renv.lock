@@ -58,49 +58,6 @@
       "Maintainer": "Kirill Müller <kirill@cynkra.com>",
       "Repository": "CRAN"
     },
-    "DataExplorer": {
-      "Package": "DataExplorer",
-      "Version": "0.8.4",
-      "Source": "Repository",
-      "Title": "Automate Data Exploration and Treatment",
-      "Authors@R": "person(\"Boxuan\", \"Cui\", email = \"boxuancui@gmail.com\", role = c(\"aut\", \"cre\"))",
-      "Description": "Automated data exploration process for analytic tasks and predictive modeling, so that users could focus on understanding data and extracting insights. The package scans and analyzes each variable, and visualizes them with typical graphical techniques. Common data processing methods are also available to treat and format data.",
-      "Depends": [
-        "R (>= 3.6)"
-      ],
-      "Imports": [
-        "data.table (>= 1.13.4)",
-        "reshape2 (>= 1.4.3)",
-        "scales (>= 1.1.0)",
-        "ggplot2",
-        "gridExtra",
-        "rmarkdown (>= 2.5)",
-        "networkD3 (>= 0.4)",
-        "stats",
-        "utils",
-        "tools",
-        "parallel"
-      ],
-      "Suggests": [
-        "testthat",
-        "covr",
-        "knitr",
-        "jsonlite",
-        "nycflights13"
-      ],
-      "SystemRequirements": "pandoc (>= 1.12.3) - http://pandoc.org",
-      "License": "MIT + file LICENSE",
-      "Language": "en-US",
-      "URL": "http://boxuancui.github.io/DataExplorer/",
-      "BugReports": "https://github.com/boxuancui/DataExplorer/issues",
-      "RoxygenNote": "7.3.2",
-      "Encoding": "UTF-8",
-      "VignetteBuilder": "knitr",
-      "NeedsCompilation": "no",
-      "Author": "Boxuan Cui [aut, cre]",
-      "Maintainer": "Boxuan Cui <boxuancui@gmail.com>",
-      "Repository": "CRAN"
-    },
     "KernSmooth": {
       "Package": "KernSmooth",
       "Version": "2.23-26",
@@ -1310,58 +1267,6 @@
       "Maintainer": "Tyson Barrett <t.barrett88@gmail.com>",
       "Repository": "CRAN"
     },
-    "data.tree": {
-      "Package": "data.tree",
-      "Version": "1.2.0",
-      "Source": "Repository",
-      "Type": "Package",
-      "Title": "General Purpose Hierarchical Data Structure",
-      "Language": "en-US",
-      "Date": "2025-08-06",
-      "Authors@R": "c( person( \"Russ\", \"Hyde\", role = c(\"ctb\"), comment = \"improve dependencies\" ), person( \"Chris\", \"Hammill\", role = c(\"ctb\"), comment = \"improve getting\" ), person( \"Facundo\", \"Munoz\", role = c(\"ctb\"), comment = \"improve list conversion\" ), person( \"Markus\", \"Wamser\" , role = c(\"ctb\") , comment = \"fixed some typos\" ), person( \"Pierre\", \"Formont\" , role = c(\"ctb\") , comment = \"additional features\" ), person( \"Kent\", \"Russel\" , role = c(\"ctb\") , comment = \"documentation\" ), person( \"Noam\", \"Ross\" , role = c(\"ctb\") , comment = \"fixes\" ), person( \"Duncan\", \"Garmonsway\" , role = c(\"ctb\") , comment = \"fixes\" ), person( \"Christoph\", \"Glur\" , role = c(\"aut\", \"cre\") , comment = \"R interface\" , email = \"christoph.glur@powerpartners.pro\" ) )",
-      "VignetteBuilder": "knitr, rmarkdown",
-      "Imports": [
-        "R6",
-        "stringi",
-        "methods"
-      ],
-      "Suggests": [
-        "Formula",
-        "graphics",
-        "testthat",
-        "knitr",
-        "rmarkdown",
-        "ape",
-        "yaml",
-        "networkD3",
-        "jsonlite",
-        "treemap",
-        "party",
-        "partykit",
-        "doParallel",
-        "foreach",
-        "htmlwidgets",
-        "DiagrammeR (>= 1.0.0)",
-        "mockery",
-        "rpart"
-      ],
-      "Enhances": [
-        "igraph"
-      ],
-      "Description": "Create tree structures from hierarchical data, and traverse the tree in various orders. Aggregate, cumulate, print, plot, convert to and from data.frame and more. Useful for decision trees, machine learning, finance, conversion from and to JSON, and many other applications.",
-      "License": "GPL (>= 2)",
-      "URL": "https://github.com/gluc/data.tree",
-      "BugReports": "https://github.com/gluc/data.tree/issues",
-      "Depends": [
-        "R (>= 3.5)"
-      ],
-      "RoxygenNote": "7.3.2",
-      "Encoding": "UTF-8",
-      "NeedsCompilation": "no",
-      "Author": "Russ Hyde [ctb] (improve dependencies), Chris Hammill [ctb] (improve getting), Facundo Munoz [ctb] (improve list conversion), Markus Wamser [ctb] (fixed some typos), Pierre Formont [ctb] (additional features), Kent Russel [ctb] (documentation), Noam Ross [ctb] (fixes), Duncan Garmonsway [ctb] (fixes), Christoph Glur [aut, cre] (R interface)",
-      "Maintainer": "Christoph Glur <christoph.glur@powerpartners.pro>",
-      "Repository": "CRAN"
-    },
     "dbplyr": {
       "Package": "dbplyr",
       "Version": "2.4.0",
@@ -1496,14 +1401,13 @@
     },
     "digest": {
       "Package": "digest",
-      "Version": "0.6.34",
+      "Version": "0.6.39",
       "Source": "Repository",
-      "Author": "Dirk Eddelbuettel <edd@debian.org> with contributions by Antoine Lucas, Jarek Tuszynski, Henrik Bengtsson, Simon Urbanek, Mario Frasca, Bryan Lewis, Murray Stokely, Hannes Muehleisen, Duncan Murdoch, Jim Hester, Wush Wu, Qiang Kou, Thierry Onkelinx, Michel Lang, Viliam Simko, Kurt Hornik, Radford Neal, Kendon Bell, Matthew de Queljoe, Ion Suruceanu, Bill Denney, Dirk Schumacher, Winston Chang, Dean Attali, and Michael Chirico.",
-      "Date": "2024-01-11",
-      "Maintainer": "Dirk Eddelbuettel <edd@debian.org>",
+      "Authors@R": "c(person(\"Dirk\", \"Eddelbuettel\", role = c(\"aut\", \"cre\"), email = \"edd@debian.org\", comment = c(ORCID = \"0000-0001-6419-907X\")), person(\"Antoine\", \"Lucas\", role=\"ctb\", comment = c(ORCID = \"0000-0002-8059-9767\")), person(\"Jarek\", \"Tuszynski\", role=\"ctb\"), person(\"Henrik\", \"Bengtsson\", role=\"ctb\", comment = c(ORCID = \"0000-0002-7579-5165\")), person(\"Simon\", \"Urbanek\", role=\"ctb\", comment = c(ORCID = \"0000-0003-2297-1732\")), person(\"Mario\", \"Frasca\", role=\"ctb\"), person(\"Bryan\", \"Lewis\", role=\"ctb\"), person(\"Murray\", \"Stokely\", role=\"ctb\"), person(\"Hannes\", \"Muehleisen\", role=\"ctb\", comment = c(ORCID = \"0000-0001-8552-0029\")), person(\"Duncan\", \"Murdoch\", role=\"ctb\"), person(\"Jim\", \"Hester\", role=\"ctb\", comment = c(ORCID = \"0000-0002-2739-7082\")), person(\"Wush\", \"Wu\", role=\"ctb\", comment = c(ORCID = \"0000-0001-5180-0567\")), person(\"Qiang\", \"Kou\", role=\"ctb\", comment = c(ORCID = \"0000-0001-6786-5453\")), person(\"Thierry\", \"Onkelinx\", role=\"ctb\", comment = c(ORCID = \"0000-0001-8804-4216\")), person(\"Michel\", \"Lang\", role=\"ctb\", comment = c(ORCID = \"0000-0001-9754-0393\")), person(\"Viliam\", \"Simko\", role=\"ctb\"), person(\"Kurt\", \"Hornik\", role=\"ctb\", comment = c(ORCID = \"0000-0003-4198-9911\")), person(\"Radford\", \"Neal\", role=\"ctb\", comment = c(ORCID = \"0000-0002-2473-3407\")), person(\"Kendon\", \"Bell\", role=\"ctb\", comment = c(ORCID = \"0000-0002-9093-8312\")), person(\"Matthew\", \"de Queljoe\", role=\"ctb\"), person(\"Dmitry\", \"Selivanov\", role=\"ctb\", comment = c(ORCID = \"0000-0003-0492-6647\")), person(\"Ion\", \"Suruceanu\", role=\"ctb\", comment = c(ORCID = \"0009-0005-6446-4909\")), person(\"Bill\", \"Denney\", role=\"ctb\", comment = c(ORCID = \"0000-0002-5759-428X\")), person(\"Dirk\", \"Schumacher\", role=\"ctb\"), person(\"András\", \"Svraka\", role=\"ctb\", comment = c(ORCID = \"0009-0008-8480-1329\")), person(\"Sergey\", \"Fedorov\", role=\"ctb\", comment = c(ORCID = \"0000-0002-5970-7233\")), person(\"Will\", \"Landau\", role=\"ctb\", comment = c(ORCID = \"0000-0003-1878-3253\")), person(\"Floris\", \"Vanderhaeghe\", role=\"ctb\", comment = c(ORCID = \"0000-0002-6378-6229\")), person(\"Kevin\", \"Tappe\", role=\"ctb\"), person(\"Harris\", \"McGehee\", role=\"ctb\"), person(\"Tim\", \"Mastny\", role=\"ctb\"), person(\"Aaron\", \"Peikert\", role=\"ctb\", comment = c(ORCID = \"0000-0001-7813-818X\")), person(\"Mark\", \"van der Loo\", role=\"ctb\", comment = c(ORCID = \"0000-0002-9807-4686\")), person(\"Chris\", \"Muir\", role=\"ctb\", comment = c(ORCID = \"0000-0003-2555-3878\")), person(\"Moritz\", \"Beller\", role=\"ctb\", comment = c(ORCID = \"0000-0003-4852-0526\")), person(\"Sebastian\", \"Campbell\", role=\"ctb\", comment = c(ORCID = \"0009-0000-5948-4503\")), person(\"Winston\", \"Chang\", role=\"ctb\", comment = c(ORCID = \"0000-0002-1576-2126\")), person(\"Dean\", \"Attali\", role=\"ctb\", comment = c(ORCID = \"0000-0002-5645-3493\")), person(\"Michael\", \"Chirico\", role=\"ctb\", comment = c(ORCID = \"0000-0003-0787-087X\")), person(\"Kevin\", \"Ushey\", role=\"ctb\", comment = c(ORCID = \"0000-0003-2880-7407\")), person(\"Carl\", \"Pearson\", role=\"ctb\", comment = c(ORCID = \"0000-0003-0701-7860\")))",
+      "Date": "2025-11-19",
       "Title": "Create Compact Hash Digests of R Objects",
-      "Description": "Implementation of a function 'digest()' for the creation of hash digests of arbitrary R objects (using the 'md5', 'sha-1', 'sha-256', 'crc32', 'xxhash', 'murmurhash', 'spookyhash', 'blake3' and 'crc32c' algorithms) permitting easy comparison of R language objects, as well as functions such as'hmac()' to create hash-based message authentication code. Please note that this package is not meant to be deployed for cryptographic purposes for which more comprehensive (and widely tested) libraries such as 'OpenSSL' should be used.",
-      "URL": "https://github.com/eddelbuettel/digest, https://dirk.eddelbuettel.com/code/digest.html",
+      "Description": "Implementation of a function 'digest()' for the creation of hash digests of arbitrary R objects (using the 'md5', 'sha-1', 'sha-256', 'crc32', 'xxhash', 'murmurhash', 'spookyhash', 'blake3', 'crc32c', 'xxh3_64', and 'xxh3_128' algorithms) permitting easy comparison of R language objects, as well as functions such as 'hmac()' to create hash-based message authentication code. Please note that this package is not meant to be deployed for cryptographic purposes for which more comprehensive (and widely tested) libraries such as 'OpenSSL' should be used.",
+      "URL": "https://github.com/eddelbuettel/digest, https://eddelbuettel.github.io/digest/, https://dirk.eddelbuettel.com/code/digest.html",
       "BugReports": "https://github.com/eddelbuettel/digest/issues",
       "Depends": [
         "R (>= 3.3.0)"
@@ -1514,10 +1418,14 @@
       "License": "GPL (>= 2)",
       "Suggests": [
         "tinytest",
-        "simplermarkdown"
+        "simplermarkdown",
+        "rbenchmark"
       ],
       "VignetteBuilder": "simplermarkdown",
+      "Encoding": "UTF-8",
       "NeedsCompilation": "yes",
+      "Author": "Dirk Eddelbuettel [aut, cre] (ORCID: <https://orcid.org/0000-0001-6419-907X>), Antoine Lucas [ctb] (ORCID: <https://orcid.org/0000-0002-8059-9767>), Jarek Tuszynski [ctb], Henrik Bengtsson [ctb] (ORCID: <https://orcid.org/0000-0002-7579-5165>), Simon Urbanek [ctb] (ORCID: <https://orcid.org/0000-0003-2297-1732>), Mario Frasca [ctb], Bryan Lewis [ctb], Murray Stokely [ctb], Hannes Muehleisen [ctb] (ORCID: <https://orcid.org/0000-0001-8552-0029>), Duncan Murdoch [ctb], Jim Hester [ctb] (ORCID: <https://orcid.org/0000-0002-2739-7082>), Wush Wu [ctb] (ORCID: <https://orcid.org/0000-0001-5180-0567>), Qiang Kou [ctb] (ORCID: <https://orcid.org/0000-0001-6786-5453>), Thierry Onkelinx [ctb] (ORCID: <https://orcid.org/0000-0001-8804-4216>), Michel Lang [ctb] (ORCID: <https://orcid.org/0000-0001-9754-0393>), Viliam Simko [ctb], Kurt Hornik [ctb] (ORCID: <https://orcid.org/0000-0003-4198-9911>), Radford Neal [ctb] (ORCID: <https://orcid.org/0000-0002-2473-3407>), Kendon Bell [ctb] (ORCID: <https://orcid.org/0000-0002-9093-8312>), Matthew de Queljoe [ctb], Dmitry Selivanov [ctb] (ORCID: <https://orcid.org/0000-0003-0492-6647>), Ion Suruceanu [ctb] (ORCID: <https://orcid.org/0009-0005-6446-4909>), Bill Denney [ctb] (ORCID: <https://orcid.org/0000-0002-5759-428X>), Dirk Schumacher [ctb], András Svraka [ctb] (ORCID: <https://orcid.org/0009-0008-8480-1329>), Sergey Fedorov [ctb] (ORCID: <https://orcid.org/0000-0002-5970-7233>), Will Landau [ctb] (ORCID: <https://orcid.org/0000-0003-1878-3253>), Floris Vanderhaeghe [ctb] (ORCID: <https://orcid.org/0000-0002-6378-6229>), Kevin Tappe [ctb], Harris McGehee [ctb], Tim Mastny [ctb], Aaron Peikert [ctb] (ORCID: <https://orcid.org/0000-0001-7813-818X>), Mark van der Loo [ctb] (ORCID: <https://orcid.org/0000-0002-9807-4686>), Chris Muir [ctb] (ORCID: <https://orcid.org/0000-0003-2555-3878>), Moritz Beller [ctb] (ORCID: <https://orcid.org/0000-0003-4852-0526>), Sebastian Campbell [ctb] (ORCID: <https://orcid.org/0009-0000-5948-4503>), Winston Chang [ctb] (ORCID: <https://orcid.org/0000-0002-1576-2126>), Dean Attali [ctb] (ORCID: <https://orcid.org/0000-0002-5645-3493>), Michael Chirico [ctb] (ORCID: <https://orcid.org/0000-0003-0787-087X>), Kevin Ushey [ctb] (ORCID: <https://orcid.org/0000-0003-2880-7407>), Carl Pearson [ctb] (ORCID: <https://orcid.org/0000-0003-0701-7860>)",
+      "Maintainer": "Dirk Eddelbuettel <edd@debian.org>",
       "Repository": "CRAN"
     },
     "dplyr": {
@@ -2739,67 +2647,6 @@
       "Repository": "https://packagemanager.posit.co/cran/__linux__/jammy/latest",
       "Encoding": "UTF-8"
     },
-    "igraph": {
-      "Package": "igraph",
-      "Version": "2.0.1.1",
-      "Source": "Repository",
-      "Title": "Network Analysis and Visualization",
-      "Authors@R": "c( person(\"Gábor\", \"Csárdi\", , \"csardi.gabor@gmail.com\", role = \"aut\", comment = c(ORCID = \"0000-0001-7098-9676\")), person(\"Tamás\", \"Nepusz\", , \"ntamas@gmail.com\", role = \"aut\", comment = c(ORCID = \"0000-0002-1451-338X\")), person(\"Vincent\", \"Traag\", role = \"aut\", comment = c(ORCID = \"0000-0003-3170-3879\")), person(\"Szabolcs\", \"Horvát\", , \"szhorvat@gmail.com\", role = \"aut\", comment = c(ORCID = \"0000-0002-3100-523X\")), person(\"Fabio\", \"Zanini\", , \"fabio.zanini@unsw.edu.au\", role = \"aut\", comment = c(ORCID = \"0000-0001-7097-8539\")), person(\"Daniel\", \"Noom\", role = \"aut\"), person(\"Kirill\", \"Müller\", , \"kirill@cynkra.com\", role = c(\"aut\", \"cre\"), comment = c(ORCID = \"0000-0002-1416-3412\")), person(\"Maëlle\", \"Salmon\", role = \"ctb\"), person(\"Michael\", \"Antonov\", role = \"ctb\"), person(\"Chan Zuckerberg Initiative\", role = \"fnd\") )",
-      "Description": "Routines for simple graphs and network analysis. It can handle large graphs very well and provides functions for generating random and regular graphs, graph visualization, centrality methods and much more.",
-      "License": "GPL (>= 2)",
-      "URL": "https://r.igraph.org/, https://igraph.org/, https://igraph.discourse.group/",
-      "BugReports": "https://github.com/igraph/rigraph/issues",
-      "Depends": [
-        "methods",
-        "R (>= 3.5.0)"
-      ],
-      "Imports": [
-        "cli",
-        "graphics",
-        "grDevices",
-        "lifecycle",
-        "magrittr",
-        "Matrix",
-        "pkgconfig (>= 2.0.0)",
-        "rlang",
-        "stats",
-        "utils"
-      ],
-      "Suggests": [
-        "ape (>= 5.7-0.1)",
-        "callr",
-        "decor",
-        "digest",
-        "graph",
-        "igraphdata",
-        "knitr",
-        "rgl",
-        "rmarkdown",
-        "scales",
-        "stats4",
-        "tcltk",
-        "testthat",
-        "vdiffr",
-        "withr"
-      ],
-      "LinkingTo": [
-        "cpp11 (>= 0.4.7)"
-      ],
-      "VignetteBuilder": "knitr",
-      "Config/Needs/build": "roxygen2, devtools, irlba, pkgconfig",
-      "Config/Needs/coverage": "covr",
-      "Config/Needs/website": "readr",
-      "Config/testthat/edition": "3",
-      "Config/testthat/parallel": "true",
-      "Config/testthat/start-first": "vs-es, scan, vs-operators, weakref, watts.strogatz.game",
-      "Encoding": "UTF-8",
-      "RoxygenNote": "7.3.0.9000",
-      "SystemRequirements": "gmp, libxml2, glpk (>= 4.57)",
-      "NeedsCompilation": "yes",
-      "Author": "Gábor Csárdi [aut] (<https://orcid.org/0000-0001-7098-9676>), Tamás Nepusz [aut] (<https://orcid.org/0000-0002-1451-338X>), Vincent Traag [aut] (<https://orcid.org/0000-0003-3170-3879>), Szabolcs Horvát [aut] (<https://orcid.org/0000-0002-3100-523X>), Fabio Zanini [aut] (<https://orcid.org/0000-0001-7097-8539>), Daniel Noom [aut], Kirill Müller [aut, cre] (<https://orcid.org/0000-0002-1416-3412>), Maëlle Salmon [ctb], Michael Antonov [ctb], Chan Zuckerberg Initiative [fnd]",
-      "Maintainer": "Kirill Müller <kirill@cynkra.com>",
-      "Repository": "CRAN"
-    },
     "isoband": {
       "Package": "isoband",
       "Version": "0.2.6",
@@ -2833,52 +2680,6 @@
       "NeedsCompilation": "yes",
       "Author": "Claus O. Wilke [aut, cre] (<https://orcid.org/0000-0002-7470-9261>), Thomas Lin Pedersen [aut] (<https://orcid.org/0000-0002-5147-4711>), testthat and Catch authors [ctb] (testthat C++ testing code)",
       "Maintainer": "Claus O. Wilke <wilke@austin.utexas.edu>",
-      "Repository": "CRAN"
-    },
-    "janitor": {
-      "Package": "janitor",
-      "Version": "2.2.1",
-      "Source": "Repository",
-      "Title": "Simple Tools for Examining and Cleaning Dirty Data",
-      "Authors@R": "c(person(\"Sam\", \"Firke\", email = \"samuel.firke@gmail.com\", role = c(\"aut\", \"cre\")), person(\"Bill\", \"Denney\", email = \"wdenney@humanpredictions.com\", role = \"ctb\"), person(\"Chris\", \"Haid\", email = \"chrishaid@gmail.com\", role = \"ctb\"), person(\"Ryan\", \"Knight\", email = \"ryangknight@gmail.com\", role = \"ctb\"), person(\"Malte\", \"Grosser\", email = \"malte.grosser@gmail.com\", role = \"ctb\"), person(\"Jonathan\", \"Zadra\", email = \"jonathan.zadra@sorensonimpact.com\", role = \"ctb\"))",
-      "Description": "The main janitor functions can: perfectly format data.frame column names; provide quick counts of variable combinations (i.e., frequency tables and crosstabs); and explore duplicate records. Other janitor functions nicely format the tabulation results. These tabulate-and-report functions approximate popular features of SPSS and Microsoft Excel. This package follows the principles of the \"tidyverse\" and works well with the pipe function %>%. janitor was built with beginning-to-intermediate R users in mind and is optimized for user-friendliness.",
-      "URL": "https://github.com/sfirke/janitor, https://sfirke.github.io/janitor/",
-      "BugReports": "https://github.com/sfirke/janitor/issues",
-      "Depends": [
-        "R (>= 3.1.2)"
-      ],
-      "Imports": [
-        "dplyr (>= 1.0.0)",
-        "hms",
-        "lifecycle",
-        "lubridate",
-        "magrittr",
-        "purrr",
-        "rlang",
-        "stringi",
-        "stringr",
-        "snakecase (>= 0.9.2)",
-        "tidyselect (>= 1.0.0)",
-        "tidyr (>= 0.7.0)"
-      ],
-      "License": "MIT + file LICENSE",
-      "RoxygenNote": "7.2.3",
-      "Suggests": [
-        "dbplyr",
-        "knitr",
-        "rmarkdown",
-        "RSQLite",
-        "sf",
-        "testthat (>= 3.0.0)",
-        "tibble",
-        "tidygraph"
-      ],
-      "VignetteBuilder": "knitr",
-      "Encoding": "UTF-8",
-      "Config/testthat/edition": "3",
-      "NeedsCompilation": "no",
-      "Author": "Sam Firke [aut, cre], Bill Denney [ctb], Chris Haid [ctb], Ryan Knight [ctb], Malte Grosser [ctb], Jonathan Zadra [ctb]",
-      "Maintainer": "Sam Firke <samuel.firke@gmail.com>",
       "Repository": "CRAN"
     },
     "jose": {
@@ -3807,44 +3608,6 @@
       "URL": "https://cran.r-project.org/package=munsell, https://github.com/cwickham/munsell/",
       "RoxygenNote": "6.0.1",
       "NeedsCompilation": "no",
-      "Repository": "CRAN"
-    },
-    "networkD3": {
-      "Package": "networkD3",
-      "Version": "0.4.1",
-      "Source": "Repository",
-      "Type": "Package",
-      "Title": "D3 JavaScript Network Graphs from R",
-      "Description": "Creates 'D3' 'JavaScript' network, tree, dendrogram, and Sankey graphs from 'R'.",
-      "Date": "2025-04-14",
-      "Authors@R": "c( person(\"J.J.\", \"Allaire\", role = \"aut\"), person(\"Peter\", \"Ellis\", role = \"ctb\"), person(\"Christopher\", \"Gandrud\", email = \"christopher.gandrud@gmail.com\", role = c(\"aut\", \"cre\")), person(\"Kevin\", \"Kuo\", role = \"ctb\"), person(\"B.W.\", \"Lewis\", role = \"ctb\"), person(\"Jonathan\", \"Owen\", role = \"ctb\"), person(\"Kenton\", \"Russell\", role = \"aut\"), person(\"Jennifer\",\"Rogers\", role = \"ctb\"), person(\"Charles\", \"Sese\", role = \"ctb\"), person(\"CJ\", \"Yetman\", email = \"cj@cjyetman.com\", role = \"aut\") )",
-      "URL": "https://christophergandrud.github.io/networkD3/, https://github.com/christophergandrud/networkD3",
-      "BugReports": "https://github.com/christophergandrud/networkD3/issues",
-      "License": "GPL (>= 3)",
-      "Depends": [
-        "R (>= 3.0.0)"
-      ],
-      "Imports": [
-        "data.tree",
-        "htmlwidgets (>= 0.3.2)",
-        "igraph",
-        "jsonlite",
-        "magrittr"
-      ],
-      "Suggests": [
-        "htmltools (>= 0.2.6)",
-        "tibble"
-      ],
-      "Encoding": "UTF-8",
-      "Enhances": [
-        "knitr",
-        "shiny"
-      ],
-      "LazyData": "true",
-      "RoxygenNote": "7.3.2",
-      "NeedsCompilation": "no",
-      "Author": "J.J. Allaire [aut], Peter Ellis [ctb], Christopher Gandrud [aut, cre], Kevin Kuo [ctb], B.W. Lewis [ctb], Jonathan Owen [ctb], Kenton Russell [aut], Jennifer Rogers [ctb], Charles Sese [ctb], CJ Yetman [aut]",
-      "Maintainer": "Christopher Gandrud <christopher.gandrud@gmail.com>",
       "Repository": "CRAN"
     },
     "nlme": {
@@ -4879,39 +4642,6 @@
       "Maintainer": "Jennifer Bryan <jenny@posit.co>",
       "Repository": "CRAN"
     },
-    "reshape2": {
-      "Package": "reshape2",
-      "Version": "1.4.4",
-      "Source": "Repository",
-      "Title": "Flexibly Reshape Data: A Reboot of the Reshape Package",
-      "Author": "Hadley Wickham <h.wickham@gmail.com>",
-      "Maintainer": "Hadley Wickham <h.wickham@gmail.com>",
-      "Description": "Flexibly restructure and aggregate data using just two functions: melt and 'dcast' (or 'acast').",
-      "License": "MIT + file LICENSE",
-      "URL": "https://github.com/hadley/reshape",
-      "BugReports": "https://github.com/hadley/reshape/issues",
-      "Depends": [
-        "R (>= 3.1)"
-      ],
-      "Imports": [
-        "plyr (>= 1.8.1)",
-        "Rcpp",
-        "stringr"
-      ],
-      "Suggests": [
-        "covr",
-        "lattice",
-        "testthat (>= 0.8.0)"
-      ],
-      "LinkingTo": [
-        "Rcpp"
-      ],
-      "Encoding": "UTF-8",
-      "LazyData": "true",
-      "RoxygenNote": "7.1.0",
-      "NeedsCompilation": "yes",
-      "Repository": "https://packagemanager.posit.co/cran/__linux__/jammy/latest"
-    },
     "rlang": {
       "Package": "rlang",
       "Version": "1.1.6",
@@ -5590,41 +5320,6 @@
       "NeedsCompilation": "no",
       "Author": "Winston Chang [aut, cre] (<https://orcid.org/0000-0002-1576-2126>), Joe Cheng [aut], JJ Allaire [aut], Carson Sievert [aut] (<https://orcid.org/0000-0002-4958-2844>), Barret Schloerke [aut] (<https://orcid.org/0000-0001-9986-114X>), Yihui Xie [aut], Jeff Allen [aut], Jonathan McPherson [aut], Alan Dipert [aut], Barbara Borges [aut], Posit Software, PBC [cph, fnd], jQuery Foundation [cph] (jQuery library and jQuery UI library), jQuery contributors [ctb, cph] (jQuery library; authors listed in inst/www/shared/jquery-AUTHORS.txt), jQuery UI contributors [ctb, cph] (jQuery UI library; authors listed in inst/www/shared/jqueryui/AUTHORS.txt), Mark Otto [ctb] (Bootstrap library), Jacob Thornton [ctb] (Bootstrap library), Bootstrap contributors [ctb] (Bootstrap library), Twitter, Inc [cph] (Bootstrap library), Prem Nawaz Khan [ctb] (Bootstrap accessibility plugin), Victor Tsaran [ctb] (Bootstrap accessibility plugin), Dennis Lembree [ctb] (Bootstrap accessibility plugin), Srinivasu Chakravarthula [ctb] (Bootstrap accessibility plugin), Cathy O'Connor [ctb] (Bootstrap accessibility plugin), PayPal, Inc [cph] (Bootstrap accessibility plugin), Stefan Petre [ctb, cph] (Bootstrap-datepicker library), Andrew Rowls [ctb, cph] (Bootstrap-datepicker library), Brian Reavis [ctb, cph] (selectize.js library), Salmen Bejaoui [ctb, cph] (selectize-plugin-a11y library), Denis Ineshin [ctb, cph] (ion.rangeSlider library), Sami Samhuri [ctb, cph] (Javascript strftime library), SpryMedia Limited [ctb, cph] (DataTables library), John Fraser [ctb, cph] (showdown.js library), John Gruber [ctb, cph] (showdown.js library), Ivan Sagalaev [ctb, cph] (highlight.js library), R Core Team [ctb, cph] (tar implementation from R)",
       "Maintainer": "Winston Chang <winston@posit.co>",
-      "Repository": "CRAN"
-    },
-    "snakecase": {
-      "Package": "snakecase",
-      "Version": "0.11.1",
-      "Source": "Repository",
-      "Date": "2023-08-27",
-      "Title": "Convert Strings into any Case",
-      "Description": "A consistent, flexible and easy to use tool to parse and convert strings into cases like snake or camel among others.",
-      "Authors@R": "c( person(\"Malte\", \"Grosser\", , \"malte.grosser@gmail.com\", role = c(\"aut\", \"cre\")))",
-      "Maintainer": "Malte Grosser <malte.grosser@gmail.com>",
-      "Depends": [
-        "R (>= 3.2)"
-      ],
-      "Imports": [
-        "stringr",
-        "stringi"
-      ],
-      "Suggests": [
-        "testthat",
-        "covr",
-        "tibble",
-        "purrrlyr",
-        "knitr",
-        "rmarkdown",
-        "magrittr"
-      ],
-      "URL": "https://github.com/Tazinho/snakecase",
-      "BugReports": "https://github.com/Tazinho/snakecase/issues",
-      "Encoding": "UTF-8",
-      "License": "GPL-3",
-      "RoxygenNote": "6.1.1",
-      "VignetteBuilder": "knitr",
-      "NeedsCompilation": "no",
-      "Author": "Malte Grosser [aut, cre]",
       "Repository": "CRAN"
     },
     "snowflakeauth": {
