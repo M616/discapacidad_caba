@@ -53,6 +53,9 @@ comunas_caba <-
 
 geom_comunas <- comunas_caba
 
+
+
+####to do: agregar vivienda particular o colectiva; tipo de vivienda
 base2 <- 
   base2 |> 
   select(
@@ -64,7 +67,9 @@ base2 <-
     tipo_de_convivencia,
     cobertura_de_salud,
     tipo_de_deficiencia_simple_multiple,
-    equipamiento)
+    equipamiento,
+    vivienda_particular_o_colectiva,
+    tipo_de_vivienda)
 
 comunas_caba <- 
   st_join(comunas_caba,
@@ -80,7 +85,8 @@ tabla_resumen <-
     pct_vivienda_adaptada = mean(vivienda_adaptada == "Sí", na.rm = TRUE) * 100,
     pct_cobertura_publica = mean(cobertura_de_salud %in%  c('Programa Nacional y/o Provincial de Salud','Pública'), na.rm = TRUE) * 100,
     pct_hacinamiento = mean(nivel_de_hacinamiento %in% c('Nivel Crítico', 'Nivel Moderado'), na.rm = TRUE) * 100,
-    edad_promedio = mean(edad_actual, na.rm = TRUE)
+    edad_promedio = mean(edad_actual, na.rm = TRUE),
+    pct_vivienda_colectiva = mean(vivienda_particular_o_colectiva == 'Colectiva', na.rm = TRUE) * 100
   )
 
 tabla_mapa <- geom_comunas %>%
@@ -89,7 +95,7 @@ tabla_mapa <- geom_comunas %>%
 saveRDS(tabla_mapa, "data/processed/tabla_mapa.rds")
 
 
-tabla_mapa <- readRDS("data/processed/tabla_mapa.rds")
+#tabla_mapa <- readRDS("data/processed/tabla_mapa.rds")
 
 server <- function(input, output, session) {
   
@@ -143,10 +149,11 @@ ui <- navbarPage(
           "Seleccionar indicador:",
           choices = c(
             "Total de personas" = "total_personas",
+            "Edad promedio" = "edad_promedio",
             "% Vivienda adaptada" = "pct_vivienda_adaptada",
             "% Cobertura pública" = "pct_cobertura_publica",
             "% Hacinamiento" = "pct_hacinamiento",
-            "Edad promedio" = "edad_promedio"
+            "% Viviendas colectivas" = "pct_vivienda_colectiva"            
           ),
           selected = "total_personas"
         )
@@ -169,25 +176,41 @@ ui <- navbarPage(
       p("Base anonimizada de personas con CUD vigentes residentes en CABA en octubre de 2025."),
       
       h3("Georreferenciación"),
-      p("Las comunas fueron asignadas mediante geocodificación automática de domicilios, utilizando la API Georef (https://www.argentina.gob.ar/georef)"),
+      p(
+  "Las comunas fueron asignadas mediante geocodificación automática de domicilios, utilizando la API Georef (",
+  tags$a(
+    href = "https://www.argentina.gob.ar/georef",
+    "https://www.argentina.gob.ar/georef",
+    target = "_blank"
+  ),
+  ")."
+),
       p("El porcentaje de respuesta de la API fue del 80%."),
       p("La respuesta exitosa de la API no implica exactitud."),
       
       h3("Construcción de indicadores"),
       tags$ul(
         tags$li("Total de personas: conteo por comuna."),
-        tags$li("% Vivienda adaptada: proporción de respuestas 'Sí'."),
+        tags$li("% Vivienda adaptada: porcentaje de respuestas 'Sí'."),
         tags$li("% Cobertura pública: incluye Programa Nacional/Provincial y Pública."),
         tags$li("% Hacinamiento: incluye nivel crítico y moderado."),
-        tags$li("Edad promedio: promedio simple por comuna.")
+        tags$li("Edad promedio: promedio simple por comuna."),
+        tags$li("% Viviendas colectivas: porcentaje de viviendas colectivas.")
       ),
-      
-      h3("Limitaciones"),
+
+      h3("Sugerencias sobre la carga del formulario CUD"),
       tags$ul(
-        tags$li("Resultados sujetos a calidad declarativa de la base."),
-        tags$li("La asignación territorial depende de la geocodificación automática."),
-        tags$li("Los indicadores son descriptivos y no implican causalidad.")
-      )
+        tags$li("El 66% de la base habita en departamento. No se está cargando piso y departamento, solo se está cargando calle y altura. 
+        Se sugiere incorporarlo al formulario. No queda claro de donde sale el 
+        dato de calle y numero, ya que en el formulario solo se releva domicilio 
+        (una sola variable)"),
+        tags$li("Aproximadamente el 80% de los registros matchea con georef, 
+        sin saber los falsos positivos. Se sugiere que el operador cargue la 
+        dirección y el sistema le muestre la ubicación geográfica, para que el 
+        operador pueda validar si es correcta o no.")
+      ),
+
+
     )
   )
 )
