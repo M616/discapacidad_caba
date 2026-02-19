@@ -9,7 +9,8 @@ library(dplyr)
 # =========================
 # Cargar datos procesados
 # =========================
-tabla_mapa <- readRDS("app_geocode/data/tabla_mapa.rds")
+tabla_mapa <- readRDS("data/tabla_mapa.rds")
+#tabla_mapa <- readRDS("app_geocode/data/tabla_mapa.rds")
 
 # =========================
 # Server
@@ -52,8 +53,11 @@ server <- function(input, output, session) {
 # UI
 # =========================
 ui <- navbarPage(
-  "Indicadores territoriales - Personas con CUD en CABA",
-  
+  title = div(
+    style = "font-size: 26px; font-weight: bold;",
+    "Tablero Territorial – Personas con CUD"
+  ),
+
   tabPanel(
     "Mapa de Indicadores",
     
@@ -63,19 +67,22 @@ ui <- navbarPage(
           "indicador",
           "Seleccionar indicador:",
           choices = c(
-            "Total de personas" = "total_personas",
+            "Total personas con CUD" = "total_personas",
             "Edad promedio" = "edad_promedio",
+            #"Promedio edad inicio del daño" = "edad_inicio_del_dano_promedio",
             "% Vivienda adaptada" = "pct_vivienda_adaptada",
             "% Cobertura pública" = "pct_cobertura_publica",
             "% Hacinamiento" = "pct_hacinamiento",
-            "% Viviendas colectivas" = "pct_vivienda_colectiva"
+            "% Viviendas colectivas" = "pct_colectiva",
+            "% Personas con equipamiento" = "pct_equipamiento",
+            "% Personas con discapacidad intelectual" = "pct_intelectual"
           ),
           selected = "total_personas"
         )
       ),
       
       mainPanel(
-        leafletOutput("mapa", height = 600)
+        leafletOutput("mapa", height = "70vh")
       )
     )
   ),
@@ -84,40 +91,45 @@ ui <- navbarPage(
     "Notas metodológicas",
     
     fluidPage(
+      
       h3("Fuente de datos"),
       p("Base anonimizada de personas con CUD vigentes residentes en CABA en octubre de 2025."),
       
       h3("Georreferenciación"),
-      p(
-        "Las comunas fueron asignadas mediante geocodificación automática de domicilios, utilizando la API Georef (",
-        tags$a(
-          href = "https://www.argentina.gob.ar/georef",
-          "https://www.argentina.gob.ar/georef",
-          target = "_blank"
-        ),
-        ")."
-      ),
-      p("El porcentaje de respuesta de la API fue del 80%."),
-      p("La respuesta exitosa de la API no implica exactitud."),
-      
-      h3("Construcción de indicadores"),
       tags$ul(
-        tags$li("Total de personas: conteo por comuna."),
-        tags$li("% Vivienda adaptada: porcentaje de respuestas 'Sí'."),
-        tags$li("% Cobertura pública: incluye Programa Nacional/Provincial y Pública."),
-        tags$li("% Hacinamiento: incluye nivel crítico y moderado."),
-        tags$li("Edad promedio: promedio simple por comuna."),
-        tags$li("% Viviendas colectivas: porcentaje de viviendas colectivas.")
+        tags$li("Las comunas fueron asignadas mediante geocodificación automática de domicilios. La geocodificación automática es un proceso mediante el cual una dirección escrita se transforma en coordenadas geográficas (latitud y longitud). Estas coordenadas permiten ubicar el domicilio dentro de una comuna determinada. Por ejemplo: si se ingresa 'Av. Cabildo 500', el sistema devuelve un punto geográfico. Ese punto se cruza con el mapa oficial de comunas. De esa intersección se determina a qué comuna pertenece el domicilio."),
+        tags$li("Se utilizó la API Georef del Estado Nacional (",
+                tags$a(
+                  href = "https://www.argentina.gob.ar/georef",
+                  "https://www.argentina.gob.ar/georef",
+                  target = "_blank"
+                ),
+                ")."),
+        tags$li("El porcentaje de respuesta exitosa fue aproximadamente del 80%."),
+        tags$li("Una respuesta exitosa indica que la API pudo asignar coordenadas, pero no garantiza exactitud absoluta.")
       ),
       
+      h3("Protección de datos y confidencialidad"),
+      p("El análisis se presenta exclusivamente a nivel agregado por comuna. No se visualizan domicilios individuales ni información que permita identificar personas."),
+      tags$ul(
+        tags$li("La agregación territorial preserva la confidencialidad de los datos personales."),
+        tags$li("No se publican coordenadas individuales ni direcciones exactas."),
+        tags$li("Los indicadores reflejan tendencias colectivas y no situaciones particulares."),
+        tags$li("El tablero cumple con criterios de resguardo de datos sensibles en el marco de la normativa vigente.")
+      ),
+
+     
+
       h3("Sugerencias sobre la carga del formulario CUD"),
       tags$ul(
         tags$li("El 66% de la base habita en departamento. No se está cargando piso y departamento, solo calle y altura. Se sugiere incorporarlo al formulario."),
         tags$li("Aproximadamente el 80% de los registros matchea con georef, sin conocer falsos positivos. Se sugiere validación visual por parte del operador.")
       )
+      
     )
   )
 )
+
 
 # =========================
 # Lanzar app
