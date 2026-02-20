@@ -106,6 +106,7 @@ ui <- navbarPage(
                 ),
                 ")."),
         tags$li("El porcentaje de respuesta exitosa fue aproximadamente del 80%."),
+        tags$li("Puede existir subrepresentación de población residente en villas o asentamientos debido a la ausencia de direcciones formales (calle y altura), lo que limita la geocodificación automática."),
         tags$li("Una respuesta exitosa indica que la API pudo asignar coordenadas, pero no garantiza exactitud absoluta.")
       ),
       

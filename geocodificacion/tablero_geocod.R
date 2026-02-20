@@ -92,6 +92,6 @@ tabla_resumen <-
 tabla_mapa <- geom_comunas %>%
   left_join(tabla_resumen, by = "comuna")
 
-saveRDS(tabla_mapa, "data/processed/tabla_mapa.rds")
+saveRDS(tabla_mapa, "data/processed/georef/tabla_mapa.rds")
 saveRDS(tabla_mapa, "app_geocode/data/tabla_mapa.rds")
 saveRDS(indicadores_geo, "app_geocode/data/indicadores_geo.rds")
