@@ -1,7 +1,7 @@
 {library(httr)
 library(jsonlite)
 library(tidyverse)
-library(Rinmoscrap)
+#library(Rinmoscrap)
 library(stringr)
 library(tictoc)
 library(googledrive)
@@ -114,7 +114,7 @@ for (i in seq_len(bloques)) {
 
 
 dir.create('data/georef')
-save(respuestas, file = 'data/georef/cud_enero_respuestas_max1.Rda')
+#save(respuestas, file = 'data/georef/cud_enero_respuestas_max1.Rda')
 load('data/georef/cud_enero_respuestas_max1.Rda')
 
 resultados_largos <- map_dfr(respuestas, function(res) {
@@ -149,9 +149,9 @@ resultados_largos <- map_dfr(respuestas, function(res) {
   })
 })
 
-save(resultados_largos, file = 'data/georef/cud_enero26_resultados_largos_max1.Rda')
+#save(resultados_largos, file = 'data/georef/cud_enero26_resultados_largos_max1.Rda')
 
-#load('data/georef/cud_enero26_resultados_largos_max1.Rda')
+load('data/georef/cud_enero26_resultados_largos_max1.Rda')
 
 
 base2 <- 
@@ -172,45 +172,53 @@ base2 <-
 
 prop.table(table(st_is_empty(base2$geometry)))*100
 
-st_write(base2, 'data/georef/andis_marzo_georef.gpkg')
-#base2 <- 
-#  base2 |> 
-#  filter(!st_is_empty(geometry))
-
-base2$tipo_de_deficiencia_simple_multiple <- factor(base2$tipo_de_deficiencia_simple_multiple)
-mapview(base2,popup = c('domicilio', 
-'domicilio_numero'), 
-zcol = 'tipo_de_deficiencia_simple_multiple' )
-
-base2 |> st_drop_geometry() |> 
-  count(tipo_de_deficiencia_simple_multiple)
-
-
 base2 <- base2[!st_is_empty(base2$geometry) & !is.na(st_is_empty(base2$geometry)), ]
 
-library(leaflet)
+st_write(base2, 'data/georef/andis_marzo_georef.gpkg')
 
-pal <- colorFactor(
-  palette = "Set1",
-  domain = base2$tipo_de_deficiencia_simple_multiple
+
+###
+base2 <- st_read('data/georef/andis_marzo_georef.gpkg')
+
+base2 <- 
+  base2 |> 
+  filter(!st_is_empty(geometry))
+
+
+base2$tipo_de_deficiencia_simple_multiple <- factor(base2$tipo_de_deficiencia_simple_multiple)
+factor(base2$vivienda_adaptada)
+
+
+base2[is.na(base2$vivienda_adaptada), "vivienda_adaptada" ]  <- 'No corresponde'
+
+base2$vivienda_adaptada <- factor(base2$vivienda_adaptada)
+
+library(shiny)
+library(leaflet)
+library(sf)
+library(leafgl)
+
+# cargar datos
+base2 <- st_read('data/georef/andis_marzo_georef.gpkg')
+ui <- fluidPage(
+  leafletOutput("mapa", height = "800px")
 )
 
-leaflet(base2) |>
-  addProviderTiles("CartoDB.Positron") |>
-  addCircleMarkers(
-    radius = 4,
-    color = ~pal(tipo_de_deficiencia_simple_multiple),
-    stroke = FALSE,
-    fillOpacity = 0.7,
-    popup = ~paste0(
-      "<b>Domicilio:</b> ", domicilio, "<br>",
-      "<b>Número:</b> ", numero_domicilio, "<br>",
-      "<b>Tipo:</b> ", tipo_de_deficiencia_simple_multiple
-    )
-  ) |>
-  addLegend(
-    "bottomright",
-    pal = pal,
-    values = ~tipo_de_deficiencia_simple_multiple,
-    title = "Tipo de deficiencia"
-  )
+server <- function(input, output, session){
+
+  output$mapa <- renderLeaflet({
+
+    leaflet() %>%
+      addProviderTiles("CartoDB.Positron") %>%
+      leafgl::addGlPoints(
+        data = base2,
+        popup = ~paste(domicilio, numero_domicilio),
+        color = "#99ff99",
+        radius = 3
+      )
+
+  })
+
+}
+
+shinyApp(ui, server)
