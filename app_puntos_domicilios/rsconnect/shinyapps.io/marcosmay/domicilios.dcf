@@ -1,0 +1,10 @@
+name: domicilios
+title:
+username: marcosmay
+account: marcosmay
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 16828512
+bundleId: 11669278
+url: https://marcosmay.shinyapps.io/domicilios/
+version: 1

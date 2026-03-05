@@ -170,55 +170,9 @@ base2 <-
 base2 <- 
   st_set_crs(base2, 4326)
 
-prop.table(table(st_is_empty(base2$geometry)))*100
-
-base2 <- base2[!st_is_empty(base2$geometry) & !is.na(st_is_empty(base2$geometry)), ]
-
-st_write(base2, 'data/georef/andis_marzo_georef.gpkg')
-
-
-###
-base2 <- st_read('data/georef/andis_marzo_georef.gpkg')
-
-base2 <- 
-  base2 |> 
-  filter(!st_is_empty(geometry))
-
-
-base2$tipo_de_deficiencia_simple_multiple <- factor(base2$tipo_de_deficiencia_simple_multiple)
-factor(base2$vivienda_adaptada)
-
 
 base2[is.na(base2$vivienda_adaptada), "vivienda_adaptada" ]  <- 'No corresponde'
-
 base2$vivienda_adaptada <- factor(base2$vivienda_adaptada)
+base2$tipo_de_deficiencia_simple_multiple <- factor(base2$tipo_de_deficiencia_simple_multiple)
 
-library(shiny)
-library(leaflet)
-library(sf)
-library(leafgl)
-
-# cargar datos
-base2 <- st_read('data/georef/andis_marzo_georef.gpkg')
-ui <- fluidPage(
-  leafletOutput("mapa", height = "800px")
-)
-
-server <- function(input, output, session){
-
-  output$mapa <- renderLeaflet({
-
-    leaflet() %>%
-      addProviderTiles("CartoDB.Positron") %>%
-      leafgl::addGlPoints(
-        data = base2,
-        popup = ~paste(domicilio, numero_domicilio),
-        color = "#99ff99",
-        radius = 3
-      )
-
-  })
-
-}
-
-shinyApp(ui, server)
+st_write(base2, 'data/georef/andis_marzo_georef.gpkg', append = FALSE)
