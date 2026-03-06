@@ -1,7 +1,7 @@
 library(shiny)
 library(leaflet)
 library(sf, quietly = TRUE)
-library(leafgl)
+library(leafgl, quietly = TRUE)
 
 #base <- st_read('app_puntos_domicilios/data/andis_marzo_georef.gpkg')
 base <- st_read('data/andis_marzo_georef.gpkg')
