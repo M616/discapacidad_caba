@@ -1,7 +1,7 @@
 library(shiny)
 library(leaflet)
-library(sf, quietly = TRUE)
-library(leafgl, quietly = TRUE)
+library(sf)
+library(leafgl)
 
 #base <- st_read('app_puntos_domicilios/data/andis_marzo_georef.gpkg')
 base <- st_read('data/andis_marzo_georef.gpkg')
@@ -12,7 +12,7 @@ base$color = "#8fd19e"
 base$popup <- paste0(
   "<b>Domicilio:</b> ", base$domicilio, " ", base$numero_domicilio, "<br>",
   "<b>Vivienda adaptada:</b> ", base$vivienda_adaptada, "<br>",
-  "<b>Tipo de deficiencia:</b> ", base$tipo_de_deficiencia_simple_multiple, "<br>",
+  #"<b>Tipo de deficiencia:</b> ", base$tipo_de_deficiencia_simple_multiple, "<br>",
   "<b>Grupo quinquenal:</b> ", base$grupos_quinquenales
 )
 

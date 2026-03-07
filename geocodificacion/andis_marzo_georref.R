@@ -175,16 +175,20 @@ base2[is.na(base2$vivienda_adaptada), "vivienda_adaptada" ]  <- 'No corresponde'
 base2$vivienda_adaptada <- factor(base2$vivienda_adaptada)
 base2$tipo_de_deficiencia_simple_multiple <- factor(base2$tipo_de_deficiencia_simple_multiple)
 
+base2 <- st_read('app_puntos_domicilios/data/andis_marzo_georef.gpkg')
 
 base <- 
   base2 |> 
   dplyr::select(
     tipo_de_deficiencia_simple_multiple,
+    vivienda_adaptada,
+    grupos_quinquenales,
     domicilio,
     numero_domicilio,
     geom
   )
 
 
-st_write(base2, 'data/georef/andis_marzo_georef.gpkg', append = FALSE)
+
+st_write(base, 'data/georef/andis_marzo_georef.gpkg', append = FALSE)
 st_write(base, 'app_puntos_domicilios/data/andis_marzo_georef.gpkg', append = FALSE)
