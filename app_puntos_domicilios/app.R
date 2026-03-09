@@ -3,16 +3,31 @@ library(leaflet)
 library(sf)
 library(leafgl)
 
-#base <- st_read('app_puntos_domicilios/data/andis_marzo_georef.gpkg')
-base <- st_read('data/andis_marzo_georef.gpkg')
+base <- st_read('app_puntos_domicilios/data/andis_marzo_georef.gpkg')
+#base <- st_read('data/andis_marzo_georef.gpkg')
 
-base$color = "#8fd19e"
+base <- base[!sf::st_is_empty(base), ]
+base <- sf::st_cast(base, "POINT")
+
+coords <- sf::st_coordinates(base)
+
+base$lng <- coords[,1]
+base$lat <- coords[,2]
+
+#base$color = "#8fd19e"
+
+base$color <- ifelse(
+  base$vivienda_particular_o_colectiva == "Colectiva",
+  "#d73027",   # rojo
+  "#8fd19e"    # verde
+)
 
 # popup liviano
 base$popup <- paste0(
+  "<b>Comuna:</b> ", base$comuna, "<br>",
   "<b>Domicilio:</b> ", base$domicilio, " ", base$numero_domicilio, "<br>",
-  "<b>Vivienda adaptada:</b> ", base$vivienda_adaptada, "<br>",
-  #"<b>Tipo de deficiencia:</b> ", base$tipo_de_deficiencia_simple_multiple, "<br>",
+  #"<b>Vivienda adaptada:</b> ", base$vivienda_adaptada, "<br>",
+  "<b>Tipo de vivienda:</b> ", base$vivienda_particular_o_colectiva, "<br>",
   "<b>Grupo quinquenal:</b> ", base$grupos_quinquenales
 )
 
@@ -23,11 +38,17 @@ ui <- fluidPage(
   tabsetPanel(
 
     tabPanel(
-      "Mapa",
+  "Mapa",
 
-      leafletOutput("mapa", height = "800px")
+  selectInput(
+    "comuna",
+    "Filtrar por comuna:",
+    choices = c("Todas", sort(unique(base$comuna))),
+    selected = "Todas"
+  ),
 
-    ),
+  leafletOutput("mapa", height = "800px")
+),
 
     tabPanel(
       "Notas metodológicas",
@@ -79,18 +100,46 @@ ui <- fluidPage(
 
 server <- function(input, output, session){
 
-  output$mapa <- renderLeaflet({
+  datos_filtrados <- reactive({
 
+  if (input$comuna == "Todas") {
+    base
+  } else {
+    base[base$comuna == input$comuna, ]
+  }
+
+})
+
+  output$contador <- renderText({
+    paste("Domicilios visualizados:", nrow(datos_filtrados()))
+  })
+
+  output$mapa <- renderLeaflet({
     leaflet() %>%
       addProviderTiles("CartoDB.Positron") %>%
-      leafgl::addGlPoints(
-        data = base,
-        popup = base$popup,
-        fillColor = ~color,
-        radius = 9
+      addLegend(
+        position = "bottomright",
+        colors = c("#8fd19e", "#d73027"),
+        labels = c("Vivienda particular", "Vivienda colectiva"),
+        title = "Tipo de vivienda"
       )
-
   })
+
+  observe({
+
+  datos <- datos_filtrados()
+
+  leafletProxy("mapa") %>%
+    clearMarkers() %>%
+    leafgl::addGlPoints(
+      lng = datos$lng,
+      lat = datos$lat,
+      popup = datos$popup,
+      fillColor = datos$color,
+      radius = 9
+    )
+
+})
 
 }
 

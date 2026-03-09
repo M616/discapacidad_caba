@@ -114,8 +114,8 @@ for (i in seq_len(bloques)) {
 
 
 dir.create('data/georef')
-#save(respuestas, file = 'data/georef/cud_enero_respuestas_max1.Rda')
-load('data/georef/cud_enero_respuestas_max1.Rda')
+save(respuestas, file = 'data/georef/cud_marzo_respuestas_max1.Rda')
+#load('data/georef/cud_enero_respuestas_max1.Rda')
 
 resultados_largos <- map_dfr(respuestas, function(res) {
   
@@ -149,9 +149,8 @@ resultados_largos <- map_dfr(respuestas, function(res) {
   })
 })
 
-#save(resultados_largos, file = 'data/georef/cud_enero26_resultados_largos_max1.Rda')
-
-load('data/georef/cud_enero26_resultados_largos_max1.Rda')
+save(resultados_largos, file = 'data/georef/cud_marzo26_resultados_largos_max1.Rda')
+#load('data/georef/cud_marzo26_resultados_largos_max1.Rda')
 
 
 base2 <- 
@@ -175,13 +174,49 @@ base2[is.na(base2$vivienda_adaptada), "vivienda_adaptada" ]  <- 'No corresponde'
 base2$vivienda_adaptada <- factor(base2$vivienda_adaptada)
 base2$tipo_de_deficiencia_simple_multiple <- factor(base2$tipo_de_deficiencia_simple_multiple)
 
-base2 <- st_read('app_puntos_domicilios/data/andis_marzo_georef.gpkg')
+##poner tipo de vivienda colectiva o individual 
+#hay 186 personas viviendo en la calle pero con dimicilio. son paradores sociales?
+base2 |> st_drop_geometry() |> count(vivienda_particular_o_colectiva)
+base2 |> st_drop_geometry() |> count(tipo_de_vivienda)
+
+base2 |> 
+  st_drop_geometry() |> 
+  filter(tipo_de_vivienda == 'Persona viviendo en calle') |> 
+  select(domicilio, numero_domicilio, vivienda_particular_o_colectiva)
+
+base2$vivienda_particular_o_colectiva <- 
+  factor(base2$vivienda_particular_o_colectiva )
+
+
+#hacer jopin espacial con comunas caba
+# URL con filtro CQL por el atributo 'gna' = 'Comuna'
+url_comunas_caba <- "https://wms.ign.gob.ar/geoserver/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=ign:departamento&outputFormat=application/json&cql_filter=gna='Comuna'"
+# Descargar solo las comunas
+comunas_caba <- st_read(url_comunas_caba)
+
+comunas_caba <- 
+  comunas_caba |> 
+  mutate(comuna = nam) |> 
+  select(comuna)
+
+#base2 <- st_read('data/georef/andis_marzo_georef.gpkg')
+
+base2 <- 
+  st_join(base2,
+        comunas_caba,
+        left = TRUE
+            )
+
+
+st_write(base2, 'data/georef/andis_marzo_georef.gpkg', append = FALSE)
 
 base <- 
   base2 |> 
-  dplyr::select(
+  filter(!st_is_empty(geom) )|> 
+    dplyr::select(
+    comuna,
     tipo_de_deficiencia_simple_multiple,
-    vivienda_adaptada,
+    vivienda_particular_o_colectiva,
     grupos_quinquenales,
     domicilio,
     numero_domicilio,
@@ -189,6 +224,4 @@ base <-
   )
 
 
-
-st_write(base, 'data/georef/andis_marzo_georef.gpkg', append = FALSE)
 st_write(base, 'app_puntos_domicilios/data/andis_marzo_georef.gpkg', append = FALSE)
