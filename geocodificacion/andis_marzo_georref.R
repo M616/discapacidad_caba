@@ -209,9 +209,44 @@ base2 <-
 
 
 st_write(base2, 'data/georef/andis_marzo_georef.gpkg', append = FALSE)
+#base <- st_read('app_puntos_domicilios/data/andis_marzo_georef.gpkg')
+
+
+base <- base[!is.na(base$comuna), ]
+base <- base[!sf::st_is_empty(base), ]
+base <- sf::st_cast(base, "POINT")
+
+coords <- sf::st_coordinates(base)
+
+base$lng <- coords[,1]
+base$lat <- coords[,2]
+
+# ordenar comunas
+orden_comunas <- sort(as.numeric(gsub("Comuna ", "", unique(base$comuna))))
+
+niveles_comunas <- paste("Comuna", orden_comunas)
+
+base$comuna <- factor(base$comuna, levels = niveles_comunas)
+
+
+base[is.na(base$vivienda_particular_o_colectiva),"vivienda_particular_o_colectiva"] <- 'Sin datos'
+
+base$color <- ifelse(
+  base$vivienda_particular_o_colectiva == "Colectiva",
+  "#d73027",   # rojo
+  "#8fd19e"    # verde
+)
+
+base$color <- 
+  ifelse(
+  base$vivienda_particular_o_colectiva == "Sin datos",
+  "#ffffff",  
+  base$color
+)
+
 
 base <- 
-  base2 |> 
+  base |> 
   filter(!st_is_empty(geom) )|> 
     dplyr::select(
     comuna,
@@ -220,8 +255,14 @@ base <-
     grupos_quinquenales,
     domicilio,
     numero_domicilio,
+    color,
+    lng,
+    lat,
     geom
   )
+
+
+
 
 
 st_write(base, 'app_puntos_domicilios/data/andis_marzo_georef.gpkg', append = FALSE)
