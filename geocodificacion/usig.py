@@ -8,6 +8,7 @@ import janitor
 from tqdm.asyncio import tqdm
 import requests
 
+
 URL = "https://servicios.usig.buenosaires.gob.ar/normalizar/"
 
 PARAMS_BASE = {
@@ -116,8 +117,10 @@ base["direccion_usig"] = (
 direcciones = base["direccion_usig"].tolist()
 
 
-results = await run([direcciones[0]])
+results = await run(direcciones)
 
 df = pd.DataFrame(results)
 
 print(df)
+
+df.to_csv("data/usig/usig_marzo.csv", encoding="utf-8")
