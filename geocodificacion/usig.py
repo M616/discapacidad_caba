@@ -63,19 +63,47 @@ async def geocode(session, direccion):
     }
 
 
-async def run(direcciones):
+async def geocode(session, item):
 
-    async with aiohttp.ClientSession() as session:
+    idx, direccion = item
 
-        tasks = [geocode(session, d) for d in direcciones]
+    params = PARAMS_BASE.copy()
+    params["direccion"] = direccion
 
-        results = []
+    for intento in range(RETRIES):
 
-        for task in tqdm(asyncio.as_completed(tasks), total=len(tasks)):
-            res = await task
-            results.append(res)
+        try:
+            async with sem:
+                async with session.get(URL, params=params, timeout=10) as resp:
 
-    return results
+                    if resp.status != 200:
+                        await asyncio.sleep(1)
+                        continue
+
+                    data = await resp.json()
+
+                    res = data["direccionesNormalizadas"][0]
+
+                    return {
+                        "id": idx,
+                        "direccion_input": direccion,
+                        "direccion_norm": res["direccion"],
+                        "lon": float(res["coordenadas"]["x"]),
+                        "lat": float(res["coordenadas"]["y"]),
+                        "tipo": res["tipo"]
+                    }
+
+        except Exception:
+            await asyncio.sleep(1 + intento)
+
+    return {
+        "id": idx,
+        "direccion_input": direccion,
+        "direccion_norm": None,
+        "lon": None,
+        "lat": None,
+        "tipo": None
+    }
 
 
 base = pd.read_csv('data/Anonimizado CUD_vigentesCABA2026. 4 de MARZO(CABA).csv', sep = ';') 
@@ -114,8 +142,24 @@ base["direccion_usig"] = (
     ", CABA"
 )
 
-direcciones = base["direccion_usig"].tolist()
+direcciones = list(zip(base.index, base["direccion_usig"]))
 
+async def run(direcciones):
+
+    async with aiohttp.ClientSession() as session:
+
+        tasks = [geocode(session, d) for d in direcciones]
+
+        results = []
+
+        for task in tqdm(asyncio.as_completed(tasks), total=len(tasks)):
+            res = await task
+            results.append(res)
+
+    return results
+
+
+#results = await run(direcciones)
 
 results = await run(direcciones)
 
@@ -123,4 +167,25 @@ df = pd.DataFrame(results)
 
 print(df)
 
-df.to_csv("data/usig/usig_marzo.csv", encoding="utf-8")
+df.to_csv("data/processed/usig/usig_marzo.csv", encoding="utf-8")
+
+df_final = base.merge(
+    df,
+    left_index=True,
+    right_on="id",
+    how="left"
+)
+
+df_final.to_csv("data/processed/usig/usig_marzo.csv", encoding="utf-8")
+
+
+import geopandas as gpd
+
+gdf = gpd.GeoDataFrame(
+    df_final,
+    geometry=gpd.points_from_xy(df_final["lon"], df_final["lat"]),
+    crs="EPSG:4326"
+)
+
+
+gdf.to_file("data/processed/usig/usig_direcciones_cud_marzo.gpkg", driver="GPKG")
