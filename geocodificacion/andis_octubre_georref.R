@@ -18,7 +18,7 @@ dir.create('data')
 
 base <- read.xlsx(
   #'data/cud_anonimizada_octubre25.xlsx',
-  'data/CUD vigentes residentes en CABA anonimizada 1-10-2025.xlsx', 
+  'data/raw/dgippd/CUD vigentes residentes en CABA anonimizada 1-10-2025.xlsx', 
 #rows = 1:2,
 cols = 1:3,
 startRow = 2,

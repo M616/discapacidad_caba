@@ -187,5 +187,39 @@ gdf = gpd.GeoDataFrame(
     crs="EPSG:4326"
 )
 
+#cargo comunas 
+url_comunas_caba = (
+    "https://wms.ign.gob.ar/geoserver/ows?"
+    "service=WFS&version=1.1.0&request=GetFeature&"
+    "typeName=ign:departamento&outputFormat=application/json&"
+    "cql_filter=gna='Comuna'"
+)
 
-gdf.to_file("data/processed/usig/usig_direcciones_cud_marzo.gpkg", driver="GPKG")
+comunas_caba = gpd.read_file(url_comunas_caba)
+
+comunas_caba["comuna"] = comunas_caba["nam"]
+comunas_caba = comunas_caba[["comuna", "geometry"]]
+base = gpd.read_file ("data/processed/usig/usig_direcciones_cud_marzo.gpkg")
+
+base = gpd.sjoin(
+    base,
+    comunas_caba,
+    how="left",          
+    predicate="intersects"  
+)
+
+total = len(base)
+
+tabla = pd.DataFrame({
+    "tipo": ["vacia", "nula", "valida"],
+    "cantidad": [
+        base.geometry.is_empty.sum(),
+        base.geometry.isna().sum(),
+        (~base.geometry.is_empty & ~base.geometry.isna()).sum()
+    ]
+})
+
+tabla["porcentaje"] = (tabla["cantidad"] / total) * 100
+
+
+base.to_file("data/processed/usig/usig_direcciones_cud_marzo.gpkg", driver="GPKG")

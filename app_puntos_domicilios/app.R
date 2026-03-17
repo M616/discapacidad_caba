@@ -3,8 +3,8 @@ library(leaflet)
 library(sf)
 library(leafgl)
 
-#base <- st_read('app_puntos_domicilios/data/andis_marzo_georef.gpkg')
-base <- st_read('data/andis_marzo_georef.gpkg')
+#base <- st_read('app_puntos_domicilios/data/andis_marzo_usig.gpkg')
+base <- st_read('data/andis_marzo_usig.gpkg')
 
 comunas <- unique(base$comuna)
 comunas <- comunas[order(as.numeric(gsub("Comuna ", "", comunas)))]
@@ -70,15 +70,15 @@ ui <- fluidPage(
 
       tags$li("Las comunas fueron asignadas mediante geocodificación automática de domicilios. La geocodificación automática es un proceso mediante el cual una dirección escrita se transforma en coordenadas geográficas (latitud y longitud). Estas coordenadas permiten ubicar el domicilio dentro de una comuna determinada. Por ejemplo: si se ingresa 'Av. Cabildo 500', el sistema devuelve un punto geográfico. Ese punto se cruza con el mapa oficial de comunas. De esa intersección se determina a qué comuna pertenece el domicilio."),
 
-      tags$li("Se utilizó la API Georef del Estado Nacional (",
+      tags$li("Se utilizó el servicio de normalización de direcciones de USIG (versión 2.1.2) (",
               tags$a(
-                href = "https://www.argentina.gob.ar/georef",
-                "https://www.argentina.gob.ar/georef",
-                target = "_blank"
-              ),
+  "Servicio de normalización de direcciones (USIG)",
+  href = "https://servicios.usig.buenosaires.gob.ar/normalizar/",
+  target = "_blank"),
               ")."),
+              
 
-      tags$li("El porcentaje de respuesta exitosa fue aproximadamente del 80%."),
+      tags$li("El porcentaje de respuesta exitosa fue aproximadamente del 85%."),
 
       tags$li("Puede existir subrepresentación de población residente en villas o asentamientos debido a la ausencia de direcciones formales (calle y altura), lo que limita la geocodificación automática."),
 

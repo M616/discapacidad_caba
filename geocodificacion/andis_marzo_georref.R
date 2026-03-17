@@ -211,6 +211,8 @@ base2 <-
 st_write(base2, 'data/georef/andis_marzo_georef.gpkg', append = FALSE)
 #base <- st_read('app_puntos_domicilios/data/andis_marzo_georef.gpkg')
 
+# aca cargo la base que geocodifique con usig
+base <- st_read("data/processed/usig/usig_direcciones_cud_marzo.gpkg")
 
 base <- base[!is.na(base$comuna), ]
 base <- base[!sf::st_is_empty(base), ]
@@ -265,4 +267,4 @@ base <-
 
 
 
-st_write(base, 'app_puntos_domicilios/data/andis_marzo_georef.gpkg', append = FALSE)
+st_write(base, 'app_puntos_domicilios/data/andis_marzo_usig.gpkg', append = FALSE)
