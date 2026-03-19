@@ -3,8 +3,8 @@ library(leaflet)
 library(sf)
 library(leafgl)
 
-#base <- st_read('app_puntos_domicilios/data/andis_marzo_usig.gpkg')
-base <- st_read('data/andis_marzo_usig.gpkg')
+#base <- st_read('app_puntos_domicilios/data/usig_direcciones_cud_marzo.gpkg')
+base <- st_read('data/usig_direcciones_cud_marzo.gpkg')
 
 comunas <- unique(base$comuna)
 comunas <- comunas[order(as.numeric(gsub("Comuna ", "", comunas)))]

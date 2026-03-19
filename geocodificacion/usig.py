@@ -7,7 +7,7 @@ import pandas as pd
 import janitor
 from tqdm.asyncio import tqdm
 import requests
-
+import geopandas as gpd
 
 URL = "https://servicios.usig.buenosaires.gob.ar/normalizar/"
 
@@ -199,7 +199,37 @@ comunas_caba = gpd.read_file(url_comunas_caba)
 
 comunas_caba["comuna"] = comunas_caba["nam"]
 comunas_caba = comunas_caba[["comuna", "geometry"]]
-base = gpd.read_file ("data/processed/usig/usig_direcciones_cud_marzo.gpkg")
+
+
+base = gpd.GeoDataFrame(
+    base,
+    geometry=gpd.points_from_xy(df_final["lon"], df_final["lat"]),
+    crs="EPSG:4326"
+)
+
+
+
+#base = gpd.read_file ("data/processed/usig/usig_direcciones_cud_marzo.gpkg")
+
+import numpy as np
+
+
+# filtrar comuna no nula
+base = base[base["comuna"].notna()]
+
+# filtrar geometrías no vacías
+base = base[~base.geometry.is_empty]
+
+# asegurar tipo POINT
+base = base.set_geometry(base.geometry)  # por las dudas
+base = base.explode(index_parts=False)   # opcional si hay multi-geometrías
+base["geometry"] = base.geometry.apply(
+    lambda geom: geom if geom.geom_type == "Point" else geom.centroid
+)
+
+# extraer coordenadas
+base["lng"] = base.geometry.x
+base["lat"] = base.geometry.y
 
 base = gpd.sjoin(
     base,
@@ -221,5 +251,41 @@ tabla = pd.DataFrame({
 
 tabla["porcentaje"] = (tabla["cantidad"] / total) * 100
 
+base = base[gdf.geometry.notnull() & ~base.geometry.is_empty]
+
+base["vivienda_particular_o_colectiva"] = (
+    base["vivienda_particular_o_colectiva"]
+    .fillna("Sin datos")
+)
+
+
+base["color"] = np.where(
+    base["vivienda_particular_o_colectiva"] == "Colectiva",
+    "#d73027",  # rojo
+    "#8fd19e"   # verde
+)
+
+base["color"] = np.where(
+    base["vivienda_particular_o_colectiva"] == "Sin datos",
+    "#ffffff",
+    base["color"]
+)
+
+
+base = base[
+    [
+        "comuna",
+        "tipo_de_deficiencia_simple_multiple",
+        "vivienda_particular_o_colectiva",
+        "grupos_quinquenales",
+        "domicilio",
+        "numero_domicilio",
+        "color",
+        "lng",
+        "lat",
+        "geometry"
+    ]
+]
 
 base.to_file("data/processed/usig/usig_direcciones_cud_marzo.gpkg", driver="GPKG")
+base.to_file('app_puntos_domicilios/data/usig_direcciones_cud_marzo.gpkg', driver="GPKG")

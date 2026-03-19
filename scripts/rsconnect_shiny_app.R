@@ -1,8 +1,8 @@
 library(rsconnect)
 rsconnect::deployApp(
-  appDir = "app_geocode",
-  appName = "CUD_geocode",
+  appDir = "app_puntos_domicilios",
+  appName = "domicilios",
   appFiles = c("app.R",
-     "data/tabla_mapa.rds"),
+     "data/usig_direcciones_cud_marzo.gpkg"),
   forceUpdate = TRUE
 )
