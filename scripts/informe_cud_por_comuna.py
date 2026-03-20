@@ -64,8 +64,24 @@ plt.legend()
 plt.tight_layout()
 
 # Guardar
-plt.savefig("piramide.png")
-plt.close()
+#plt.savefig("piramide.png")
+#plt.close()
+
+
+
+resumen = {
+    "total_cud": len(base),
+    "edad_promedio": base["edad_a_la_solicitud_del_certificado"].mean(),
+    "edad_mediana": base["edad_a_la_solicitud_del_certificado"].median(),
+    "porc_vivienda_colectiva": (
+        (base["vivienda_particular_o_colectiva"] == "Colectiva").mean() * 100
+    ),
+    "porc_cobertura_publica":
+        (base["cobertura_de_salud"].isin(["Pública", "Programa Nacional y/o Provincial de Salud"])
+    .mean() * 100)
+    }
+
+resumen
 
 
 #cargo comunas 
@@ -140,16 +156,4 @@ prevalencia_cud = personas_cud / df.poblacion_proyectada.sum() * 100
 
 
 
-resumen = {
-    "total_cud": len(base),
-    "edad_promedio": base["edad_a_la_solicitud_del_certificado"].mean(),
-    "edad_mediana": base["edad_a_la_solicitud_del_certificado"].median(),
-    "porc_vivienda_colectiva": (
-        (base["vivienda_particular_o_colectiva"] == "Colectiva").mean() * 100
-    ),
-    "porc_cobertura_publica":
-        (base["cobertura_de_salud"].isin(["Pública", "Programa Nacional y/o Provincial de Salud"])
-    .mean() * 100)
-    }
 
-resumen
