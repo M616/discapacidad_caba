@@ -1,0 +1,73 @@
+---
+title: "Untitled"
+format: html
+---
+
+```{python}
+import pandas as pd
+import geopandas as gpd
+```
+
+```{python}
+base = pd.read_csv("data/processed/usig/usig_marzo.csv")
+
+base = gpd.GeoDataFrame(
+    base,
+    geometry=gpd.points_from_xy(base["lon"], base["lat"]),
+    crs="EPSG:4326"
+)
+
+#cargo comunas 
+url_comunas_caba = (
+    "https://wms.ign.gob.ar/geoserver/ows?"
+    "service=WFS&version=1.1.0&request=GetFeature&"
+    "typeName=ign:departamento&outputFormat=application/json&"
+    "cql_filter=gna='Comuna'"
+)
+
+comunas_caba = gpd.read_file(url_comunas_caba)
+
+comunas_caba["comuna"] = comunas_caba["nam"]
+comunas_caba = comunas_caba[["comuna", "geometry"]]
+
+base = gpd.sjoin(
+    base,
+    comunas_caba,
+    how="left",          
+    predicate="intersects"  
+)
+
+# filtrar comuna no nula
+base = base[base["comuna"].notna()]
+
+# filtrar geometrías no vacías
+base = base[~base.geometry.is_empty]
+```
+
+Notas metodológicas, alcances y limitaciones
+
+Puede existir subrepresentación de población residente en villas o asentamientos debido a la ausencia de direcciones formales (calle y altura), lo que limita la geocodificación automática.
+
+Una respuesta exitosa indica que la API pudo asignar coordenadas, pero no garantiza exactitud absoluta. Por ejemplo, si se ingresa únicamente "Perón" como nombre de calle, la API puede devolver una coordenada asociada a una calle con ese nombre. Sin embargo, en la Ciudad de Buenos Aires existen calles como "Eva Perón" y "Juan Domingo Perón". Si el domicilio original corresponde a "Eva Perón" pero se carga únicamente "Perón", el sistema puede asignar una ubicación válida pero incorrecta. Este tipo de ambigüedades en la información de origen puede afectar la precisión de la geocodificación.
+
+Protección de datos y confidencialidad
+
+El análisis se presenta con fines exploratorios. Para preservar la confidencialidad de la información personal, la información se presenta de forma agregada y no expone datos identificatorios de las personas.
+
+Se prioriza la presentación de indicadores sintéticos y distribuciones agregadas. La información presentada no permite identificar personas específicas.
+
+Alcances y limitaciones del análisis
+
+El presente informe tiene un carácter exploratorio y descriptivo, y se basa en registros administrativos disponibles al momento del corte.
+
+La información corresponde a personas con Certificado Único de Discapacidad (CUD) vigente, por lo que no representa la totalidad de la población con discapacidad, sino únicamente a quienes cuentan con certificación.
+
+La calidad de los resultados depende de la consistencia y completitud de los datos de origen, pudiendo existir registros con información incompleta o categorizaciones generales.
+
+La asignación territorial a comunas se realizó mediante procesos de geocodificación automática, lo que implica posibles imprecisiones en la localización de algunos domicilios, especialmente en casos de direcciones ambiguas o incompletas.
+
+Puede existir subrepresentación de ciertos grupos poblacionales, en particular en áreas con menor formalización de direcciones o con barreras de acceso a la certificación.
+
+Los resultados deben interpretarse como una aproximación a la distribución y características de la población con CUD, y no como valores absolutos o definitivos.
+
+
