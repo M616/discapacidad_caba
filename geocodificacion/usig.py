@@ -178,14 +178,15 @@ df_final = base.merge(
 
 df_final.to_csv("data/processed/usig/usig_marzo.csv", encoding="utf-8")
 
+#df_final = pd.read_csv("data/processed/usig/usig_marzo.csv") 
 
 import geopandas as gpd
 
-gdf = gpd.GeoDataFrame(
-    df_final,
-    geometry=gpd.points_from_xy(df_final["lon"], df_final["lat"]),
-    crs="EPSG:4326"
-)
+#gdf = gpd.GeoDataFrame(
+#    df_final,
+#    geometry=gpd.points_from_xy(df_final["lon"], df_final["lat"]),
+#    crs="EPSG:4326"
+#)
 
 #cargo comunas 
 url_comunas_caba = (
@@ -202,14 +203,21 @@ comunas_caba = comunas_caba[["comuna", "geometry"]]
 
 
 base = gpd.GeoDataFrame(
-    base,
+    df_final,
     geometry=gpd.points_from_xy(df_final["lon"], df_final["lat"]),
     crs="EPSG:4326"
 )
 
-
-
 #base = gpd.read_file ("data/processed/usig/usig_direcciones_cud_marzo.gpkg")
+
+import geopandas as gpd
+
+base = gpd.sjoin(
+    base,
+    comunas_caba,
+    how="left",
+    predicate="intersects"
+    )
 
 import numpy as np
 
@@ -231,12 +239,12 @@ base["geometry"] = base.geometry.apply(
 base["lng"] = base.geometry.x
 base["lat"] = base.geometry.y
 
-base = gpd.sjoin(
-    base,
-    comunas_caba,
-    how="left",          
-    predicate="intersects"  
-)
+#base = gpd.sjoin(
+#    base,
+#    comunas_caba,
+#    how="left",          
+#    predicate="intersects"  
+#)
 
 total = len(base)
 
@@ -271,6 +279,7 @@ base["color"] = np.where(
     base["color"]
 )
 
+base.to_file("data/processed/usig/usig_direcciones_cud_marzo.gpkg", driver="GPKG")
 
 base = base[
     [
@@ -287,5 +296,4 @@ base = base[
     ]
 ]
 
-base.to_file("data/processed/usig/usig_direcciones_cud_marzo.gpkg", driver="GPKG")
 base.to_file('app_puntos_domicilios/data/usig_direcciones_cud_marzo.gpkg', driver="GPKG")
