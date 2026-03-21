@@ -71,3 +71,17 @@ Puede existir subrepresentación de ciertos grupos poblacionales, en particular 
 Los resultados deben interpretarse como una aproximación a la distribución y características de la población con CUD, y no como valores absolutos o definitivos.
 
 
+
+Por comuna (y total caba)
+
+Hotspot (imagen del mapa centrado en la comuna, del lado izquierdo de los demas datos)
+
+Total personas con CUD
+
+Porcentaje de personas con CUD sobre el total de personas con CUD CABA
+
+Piramide poblacional edad_grupos quinquenales
+
+Tipo de deficiencia
+
+% de personas con CUD en vivienda colectiva

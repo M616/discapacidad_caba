@@ -13,11 +13,16 @@ tipo_def_pct = (
     .value_counts(normalize=True) * 100
 ).round()
 
+
+base["edad_al_inicio_del_dano"].describe()
+
 ###piramido poblacional
 # ===== 1. Filtrar y agrupar =====
 piramide = (
     base[base["sexo"].isin(["Masculino", "Femenino"])]
     .groupby(["grupos_quinquenales", "sexo"])
+    #.groupby(["edad_a_la_solicitud_del_certificado", "sexo"])
+    #.groupby(["edad_al_inicio_del_dano", "sexo"])    
     .size()
     .unstack(fill_value=0)
 )
@@ -81,7 +86,7 @@ resumen = {
     .mean() * 100)
     }
 
-resumen
+print(resumen)
 
 
 #cargo comunas 
