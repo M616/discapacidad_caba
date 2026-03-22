@@ -3,45 +3,189 @@ title: "Untitled"
 format: html
 ---
 
-```{python}
-import pandas as pd
-import geopandas as gpd
+```{r}
+library(tidyverse)
+library(janitor)
+library(sf)
+library(patchwork)
 ```
 
-```{python}
-base = pd.read_csv("data/processed/usig/usig_marzo.csv")
 
-base = gpd.GeoDataFrame(
-    base,
-    geometry=gpd.points_from_xy(base["lon"], base["lat"]),
-    crs="EPSG:4326"
+```{r}
+base <- read_csv("data/processed/usig/usig_marzo.csv")
+base_sf <- st_read("data/processed/usig/usig_direcciones_cud_marzo.gpkg")
+
+url_comunas_caba <- paste0(
+  "https://wms.ign.gob.ar/geoserver/ows?",
+  "service=WFS&version=1.1.0&request=GetFeature&",
+  "typeName=ign:departamento&outputFormat=application/json&",
+  "cql_filter=gna='Comuna'"
 )
 
-#cargo comunas 
-url_comunas_caba = (
-    "https://wms.ign.gob.ar/geoserver/ows?"
-    "service=WFS&version=1.1.0&request=GetFeature&"
-    "typeName=ign:departamento&outputFormat=application/json&"
-    "cql_filter=gna='Comuna'"
-)
+comunas_caba <- st_read(url_comunas_caba, quiet = TRUE) %>%
+  mutate(comuna = nam) %>%
+  select(comuna, geometry)
+```
 
-comunas_caba = gpd.read_file(url_comunas_caba)
+```{r}
+personas_cud <- nrow(base)
 
-comunas_caba["comuna"] = comunas_caba["nam"]
-comunas_caba = comunas_caba[["comuna", "geometry"]]
+tipo_def_pct <- base %>%    
+  tabyl(tipo_de_deficiencia_simple_multiple) %>%
+  mutate(pct = round(100 * n / sum(n), 0))
 
-base = gpd.sjoin(
-    base,
-    comunas_caba,
-    how="left",          
-    predicate="intersects"  
-)
+porc_vivienda_colectiva <- mean(
+  base$vivienda_particular_o_colectiva == "Colectiva",
+  na.rm = TRUE
+) * 100
+```
 
-# filtrar comuna no nula
-base = base[base["comuna"].notna()]
 
-# filtrar geometrías no vacías
-base = base[~base.geometry.is_empty]
+```{r}
+tipo_def_plot <- base |>
+  count(tipo_de_deficiencia_simple_multiple) |>
+  ggplot(aes(
+    x = reorder(tipo_de_deficiencia_simple_multiple, n),
+    y = n
+  )) +
+  geom_col() +
+  coord_flip() +
+  theme_minimal() +
+  labs(x = NULL, y = "Cantidad", title = "Tipo de deficiencia")
+```
+
+
+```{r}
+# =====================================================
+# PIRÁMIDE POBLACIONAL
+# =====================================================
+
+# 1. Agrupar
+piramide <- base %>%
+  filter(sexo %in% c("Masculino", "Femenino")) %>%
+  count(grupos_quinquenales, sexo) %>%
+  pivot_wider(names_from = sexo, values_from = n, values_fill = 0)
+
+# 2. Hombres en negativo
+piramide <- piramide %>%
+  mutate(Masculino = -Masculino)
+
+# 3. Ordenar edades
+extraer_edad <- function(x) {
+  as.numeric(stringr::str_extract(x, "\\d+"))
+}
+
+piramide <- piramide %>%
+  arrange(extraer_edad(grupos_quinquenales)) %>%
+  mutate(
+    grupos_quinquenales = factor(
+      grupos_quinquenales,
+      levels = unique(grupos_quinquenales)
+    )
+  )
+
+# 4. Gráfico
+piramide_long <- piramide %>%
+  pivot_longer(cols = c(Masculino, Femenino),
+               names_to = "sexo",
+               values_to = "cantidad")
+
+
+piramide_plot <- 
+    ggplot(piramide_long, aes(x = cantidad, y = grupos_quinquenales, fill = sexo)) +
+  geom_col() +
+  geom_vline(xintercept = 0) +
+  labs(
+    title = "Pirámide poblacional",
+    x = "Cantidad de personas",
+    y = "Grupos quinquenales"
+  ) +
+  theme_minimal()
+
+
+max_val <- max(abs(c(piramide$Masculino, piramide$Femenino)))
+
+piramide_plot <- piramide_plot +
+  scale_x_continuous(limits = c(-max_val, max_val))   # 🔥 clave
+  #scale_y_discrete(limits = rev)
+```
+
+
+```{r}
+indicadores_plot <- 
+    ggplot() +
+  annotate("text", x = 0, y = 4, label = paste("Total CUD:", personas_cud), hjust = 0, size = 5) +
+  annotate("text", x = 0, y = 3, label = paste("% Vivienda colectiva:", round(porc_vivienda_colectiva,1)), hjust = 0, size = 5) +
+#  annotate("text", x = 0, y = 2, label = paste("Edad media:", round(edad_media,1)), hjust = 0, size = 5) +
+#  annotate("text", x = 0, y = 1, label = paste("Edad mediana:", round(edad_mediana,1)), hjust = 0, size = 5) +
+  xlim(0, 10) +
+  ylim(0, 5) +
+  theme_void()
+```
+
+
+```{r}
+base_proj <- st_transform(base_sf, 3857)
+comunas_proj <- st_transform(comunas_caba, 3857)
+
+coords <- st_coordinates(base_proj)
+df_coords <- as.data.frame(coords)
+
+hotspot <- ggplot() +
+  
+  geom_density_2d_filled(
+    data = df_coords,
+    aes(
+      X, Y,
+      fill = after_stat(level),
+      alpha = after_stat(as.numeric(level))   # 👈 ACÁ
+    ),
+    bins = 10,
+    adjust = 1.2,
+    show.legend = FALSE
+  ) +
+  
+  scale_fill_viridis_d(
+    option = "magma",
+    direction = -1
+  ) +
+  
+  scale_alpha(
+    range = c(0, 1),   # 👈 y esto
+    guide = "none"
+  ) +
+  
+  geom_sf(
+    data = comunas_proj,
+    fill = NA,
+    color = "white",
+    size = 0.3    
+  ) +
+   
+  geom_sf(
+    data = st_union(comunas_proj),
+    fill = NA,
+    color = "black",
+    size = 0.4
+  ) +
+  
+  coord_sf(expand = FALSE) +
+  
+  theme_void()
+```
+
+```{r}
+library(patchwork)
+
+layout_final <-
+  (hotspot | indicadores_plot) /
+  (piramide_plot | tipo_def_plot) +
+  plot_layout(
+    heights = c(2, 1),     # 🔥 más aire arriba
+    widths = c(1.2, 1)     # 🔥 pirámide no se aplasta
+  )
+
+layout_final
 ```
 
 Notas metodológicas, alcances y limitaciones

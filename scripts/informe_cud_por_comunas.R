@@ -172,6 +172,7 @@ ggplot() +
       alpha = after_stat(as.numeric(level))   # 👈 ACÁ
     ),
     bins = 10,
+    adjust = 1.2,
     show.legend = FALSE
   ) +
   
@@ -188,64 +189,10 @@ ggplot() +
   geom_sf(
     data = comunas_proj,
     fill = NA,
-    color = "gray",
-    size = 0.2,
-    alpha = 0.2
-  ) +
-  
-  coord_sf(expand = FALSE) +
-  
-  theme_void()
-
-
-
-mapa base_proj <- st_transform(base_sf, 3857) 
-comunas_proj <- st_transform(comunas_caba, 3857) 
-coords <- st_coordinates(base_proj) 
-df_coords <- as.data.frame(coords) 
-
-bbox <- st_bbox(comunas_proj)
-
-# puntos en esquinas del bounding box
-ghost_points <- data.frame(
-  X = c(bbox$xmin, bbox$xmin, bbox$xmax, bbox$xmax),
-  Y = c(bbox$ymin, bbox$ymax, bbox$ymin, bbox$ymax)
-)
-
-# unir con datos reales
-df_coords_ext <- rbind(df_coords, ghost_points)
-
-ggplot() +
-  
-  geom_density_2d_filled(
-    data = df_coords_ext,   # 👈 acá
-    aes(
-      X, Y,
-      fill = after_stat(level),
-      alpha = after_stat(as.numeric(level))
-    ),
-    bins = 10,
-    adjust = 1.2,
-    show.legend = FALSE
-  ) +
-  
-  scale_fill_viridis_d(
-    option = "magma",
-    direction = -1
-  ) +
-  
-  scale_alpha(
-    range = c(0.2, 1),
-    guide = "none"
-  ) +
-  
-  geom_sf(
-    data = comunas_proj,
-    fill = NA,
     color = "white",
-    size = 0.3
+    size = 0.3    
   ) +
-  
+   
   geom_sf(
     data = st_union(comunas_proj),
     fill = NA,
