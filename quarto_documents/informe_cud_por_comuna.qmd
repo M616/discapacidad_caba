@@ -38,6 +38,8 @@ porc_vivienda_colectiva <- mean(
   base$vivienda_particular_o_colectiva == "Colectiva",
   na.rm = TRUE
 ) * 100
+
+color_base <- "#7b2cbf"
 ```
 
 
@@ -49,27 +51,35 @@ tipo_def_plot <- base |>
     x = reorder(tipo_de_deficiencia_simple_multiple, n),
     y = n
   )) +
-  geom_col(fill = "#7b2cbf", alpha = 0.8) +
+  geom_col(fill = color_base, alpha = 0.8) +
 
   geom_text(
     aes(label = scales::percent(pct, accuracy = 0.1)),
     hjust = -0.1,
-    size = 3
+    size = 3,
+    color = "#2b2b2b"
   ) +
 
   labs(
     title = "Tipo de deficiencia",
-    x = "Cantidad",
-    y = NULL
+    #subtitle = texto_metricas,
+    y = "Cantidad de personas",
+    x = NULL
   ) +
 
   coord_flip() +
-  scale_y_continuous(labels = scales::comma, expand = expansion(mult = c(0, 0.1))) +
+
+  scale_y_continuous(
+    labels = scales::comma,
+    expand = expansion(mult = c(0, 0.1))
+  ) +
 
   theme_minimal(base_size = 11) +
   theme(
-    plot.title = element_text(face = "bold", size = 13),
-    legend.position = 'none' 
+    plot.title = element_text(face = "bold", size = 13, color = color_base),
+    plot.subtitle = element_text(size = 10),
+    axis.text = element_text(color = "#2b2b2b"),
+    legend.position = "none"
   )
 
 ```
@@ -120,6 +130,11 @@ piramide_plot <-
     x = "Cantidad de personas",
     y = "Grupos quinquenales"
   ) +
+    scale_fill_manual(values = c(
+    #"Masculino" = color_base,
+    #"Femenino" = scales::alpha(color_base, 0.5)
+    "Masculino" = "#5a189a",
+    "Femenino" = "#9d4edd")  ) +
   theme_minimal()+
   labs(
   title = "Pirámide poblacional",
@@ -139,23 +154,36 @@ piramide_plot <- piramide_plot +
 
 
 ```{r}
+color_base <- "#7b2cbf"
+color_texto <- "#2b2b2b"
+
 indicadores_plot <- ggplot() +
-  annotate("text", x = 0, y = 2.5,
-           label = scales::comma(personas_cud),
-           hjust = 0, size = 7, fontface = "bold") +
-  annotate("text", x = 0, y = 2,
-           label = "Total CUD",
-           hjust = 0, size = 3.5, color = "gray40") +
   
-  annotate("text", x = 0, y = 1,
+  # Total CUD
+  annotate("text", x = 0, y = 2.6,
+           label = scales::comma(personas_cud),
+           hjust = 0, size = 10, fontface = "bold",
+           color = color_base) +
+  
+  annotate("text", x = 0, y = 2.1,
+           label = "Total de personas con CUD",
+           hjust = 0, size = 8, vjust = -0.1,
+           color = color_texto) +
+  
+  # Porcentaje vivienda colectiva
+  annotate("text", x = 0, y = 1.2,
            label = paste0(round(porc_vivienda_colectiva,1), "%"),
-           hjust = 0, size = 6, fontface = "bold") +
-  annotate("text", x = 0, y = 0.6,
-           label = "Vivienda colectiva",
-           hjust = 0, size = 3.5, color = "gray40") +
+           hjust = 0, size = 10, fontface = "bold",
+           color = color_base) +
+  
+  annotate("text", x = 0, y = 0.7,
+           label = "Residen en vivienda colectiva",
+           hjust = 0, size = 8, vjust = -0.1,
+           color = color_texto) +
   
   xlim(0, 10) +
   ylim(0, 3) +
+  
   theme_void()
 ```
 
@@ -218,13 +246,26 @@ layout_final <-
     hotspot | tipo_def_plot   # 🔥 fila superior
   ) /
   (
-    piramide_plot | indicadores_plot   # 🔥 fila inferior
+    indicadores_plot | piramide_plot    # 🔥 fila inferior
   ) +
   plot_layout(
     widths = c(1, 2),    # 🔥 mapa chico, barras grandes
     heights = c(1.2, 1)
   )
-layout_final
+
+layout_final +
+  plot_annotation(
+    title = "Caracterización de personas con CUD. Total CABA",
+    theme = theme(
+      plot.title = element_text(
+        size = 20,
+        face = "bold",
+        color = color_base,
+        hjust = 0.5
+      )
+    )
+  )
+
 ```
 
 Notas metodológicas, alcances y limitaciones
