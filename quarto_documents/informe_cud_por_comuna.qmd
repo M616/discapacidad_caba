@@ -47,11 +47,25 @@ tipo_def_plot <- base |>
   ggplot(aes(
     x = reorder(tipo_de_deficiencia_simple_multiple, n),
     y = n
-  )) +
-  geom_col() +
-  coord_flip() +
-  theme_minimal() +
-  labs(x = NULL, y = "Cantidad", title = "Tipo de deficiencia")
+  ))   +
+        geom_col(aes(fill = n)) +
+  #      scale_fill_viridis_c(option = "magma", guide = "none")+
+  geom_col(fill = "#7b2cbf")  +
+  labs(
+    title = "Tipo de deficiencia",
+    x = "Cantidad",
+    y = NULL
+  ) +
+    coord_flip()+
+  scale_y_continuous(labels = scales::comma) +
+  theme_minimal(base_size = 11) +
+  theme(
+    plot.title = element_text(face = "bold", size = 13),
+
+  )
+
+
+
 ```
 
 
@@ -112,14 +126,23 @@ piramide_plot <- piramide_plot +
 
 
 ```{r}
-indicadores_plot <- 
-    ggplot() +
-  annotate("text", x = 0, y = 4, label = paste("Total CUD:", personas_cud), hjust = 0, size = 5) +
-  annotate("text", x = 0, y = 3, label = paste("% Vivienda colectiva:", round(porc_vivienda_colectiva,1)), hjust = 0, size = 5) +
-#  annotate("text", x = 0, y = 2, label = paste("Edad media:", round(edad_media,1)), hjust = 0, size = 5) +
-#  annotate("text", x = 0, y = 1, label = paste("Edad mediana:", round(edad_mediana,1)), hjust = 0, size = 5) +
+indicadores_plot <- ggplot() +
+  annotate("text", x = 0, y = 2.5,
+           label = scales::comma(personas_cud),
+           hjust = 0, size = 7, fontface = "bold") +
+  annotate("text", x = 0, y = 2,
+           label = "Total CUD",
+           hjust = 0, size = 3.5, color = "gray40") +
+  
+  annotate("text", x = 0, y = 1,
+           label = paste0(round(porc_vivienda_colectiva,1), "%"),
+           hjust = 0, size = 6, fontface = "bold") +
+  annotate("text", x = 0, y = 0.6,
+           label = "Vivienda colectiva",
+           hjust = 0, size = 3.5, color = "gray40") +
+  
   xlim(0, 10) +
-  ylim(0, 5) +
+  ylim(0, 3) +
   theme_void()
 ```
 
@@ -151,14 +174,14 @@ hotspot <- ggplot() +
   ) +
   
   scale_alpha(
-    range = c(0, 1),   # 👈 y esto
+    range = c(0.1, 0.6),   # 👈 y esto
     guide = "none"
   ) +
   
   geom_sf(
     data = comunas_proj,
     fill = NA,
-    color = "white",
+    color = "gray80",
     size = 0.3    
   ) +
    
@@ -175,16 +198,17 @@ hotspot <- ggplot() +
 ```
 
 ```{r}
-library(patchwork)
-
 layout_final <-
-  (hotspot | indicadores_plot) /
-  (piramide_plot | tipo_def_plot) +
+  (
+    hotspot | tipo_def_plot   # 🔥 fila superior
+  ) /
+  (
+    piramide_plot | indicadores_plot   # 🔥 fila inferior
+  ) +
   plot_layout(
-    heights = c(2, 1),     # 🔥 más aire arriba
-    widths = c(1.2, 1)     # 🔥 pirámide no se aplasta
+    widths = c(1, 2),    # 🔥 mapa chico, barras grandes
+    heights = c(1.2, 1)
   )
-
 layout_final
 ```
 
