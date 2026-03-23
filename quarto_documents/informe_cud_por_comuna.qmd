@@ -316,6 +316,208 @@ layout_final
 
 \newpage
 
+```{r}
+comunas <- sort(unique(base_sf$comuna))
+total_caba <- nrow(base_sf)
+
+armar_layout_comuna <- function(comuna_sel) {
+  
+  # 🔹 filtrar
+  base_df <- base_sf |> 
+    filter(comuna == comuna_sel)
+
+  comuna_pol <- 
+    comunas_caba |> 
+    filter(comuna == comuna_sel) |> 
+       st_transform(3857)
+  
+  # 🔹 indicadores
+  personas_cud <- nrow(base_df)
+  pct_caba <- personas_cud / total_caba
+  
+  porc_vivienda_colectiva <- mean(
+    base_df$vivienda_particular_o_colectiva == "Colectiva",
+    na.rm = TRUE
+  ) * 100
+  
+  # =====================================================
+  # 🔹 tipo de deficiencia
+  tipo_def_plot <- base_df |>
+    st_drop_geometry() |>   # 👈 importante
+    count(tipo_de_deficiencia_simple_multiple) |>
+    mutate(pct = n / sum(n)) |>
+    ggplot(aes(
+      x = reorder(tipo_de_deficiencia_simple_multiple, n),
+      y = n
+    )) +
+    geom_col(fill = color_base, alpha = 0.8) +
+    geom_text(
+      aes(label = scales::percent(pct, accuracy = 0.1)),
+      hjust = -0.1, size = 3
+    ) +
+    coord_flip() +
+    theme_minimal() +
+    theme(legend.position = "none")
+  
+  # =====================================================
+  # 🔹 pirámide
+  base_df$grupos_quinquenales <- str_remove(base_df$grupos_quinquenales, " años")
+  
+  piramide <- base_df %>%
+    st_drop_geometry() %>%
+    filter(sexo %in% c("Masculino", "Femenino")) %>%
+    count(grupos_quinquenales, sexo) %>%
+    arrange(extraer_edad(grupos_quinquenales)) |> 
+    pivot_wider(names_from = sexo, values_from = n, values_fill = 0) %>%
+    mutate(Masculino = -Masculino)
+  
+  piramide_long <- piramide %>%
+    pivot_longer(cols = c(Masculino, Femenino),
+                 names_to = "Sexo",
+                 values_to = "Cantidad")
+  
+  piramide_plot <- 
+  ggplot(
+    piramide_long,
+    aes(
+      x = Cantidad,
+      y = reorder(grupos_quinquenales, extraer_edad(grupos_quinquenales)),
+      fill = Sexo
+    )
+  ) +
+  geom_col() +
+  geom_vline(xintercept = 0) +
+  labs(
+    title = "Pirámide poblacional",
+    x = "Cantidad de personas",
+    y = "Grupos quinquenales"
+  ) +
+    scale_fill_manual(values = c(
+    #"Masculino" = color_base,
+    #"Femenino" = scales::alpha(color_base, 0.5)
+    "Masculino" = "#5a189a",
+    "Femenino" = "#9d4edd")  ) +
+  theme_minimal()+
+  labs(
+  title = "Pirámide poblacional",
+  y = "Edad en grupos")+
+  theme(
+  plot.title = element_text(hjust = 0.5), 
+  legend.position = "bottom")  +
+  guides(fill = guide_legend(reverse = TRUE))     
+
+
+max_val <- max(abs(c(piramide$Masculino, piramide$Femenino)))
+
+piramide_plot <- piramide_plot +
+  scale_x_continuous(limits = c(-max_val, max_val))   # 🔥 clave
+  #scale_y_discrete(limits = rev)
+  # =====================================================
+  # 🔹 indicadores
+  indicadores_plot <- ggplot() +
+  
+  # Total CUD
+  annotate("text", x = 0, y = 2.6,
+           label = scales::label_number(big.mark = ".", decimal.mark = ",")(personas_cud),
+           hjust = 0, size = 10, fontface = "bold",
+           color = color_base) +
+  
+  annotate("text", x = 0, y = 2.1,
+           label = "Total de personas con CUD",
+           hjust = 0, size = 8,
+           color = color_texto) +
+  
+  # % sobre CABA
+  annotate("text", x = 0, y = 1.5,
+           label = scales::label_percent(decimal.mark = ",", accuracy = 0.1)(pct_caba),
+           hjust = 0, size = 9, fontface = "bold",
+           color = color_base) +
+  
+  annotate("text", x = 0, y = 1.1,
+           label = "Del total de CABA",
+           hjust = 0, size = 7,
+           color = color_texto) +
+  
+  # Vivienda colectiva
+  annotate("text", x = 0, y = 0.6,
+           label = scales::label_percent(decimal.mark = ",", accuracy = 0.1)(porc_vivienda_colectiva / 100),
+           hjust = 0, size = 9, fontface = "bold",
+           color = color_base) +
+  
+  annotate("text", x = 0, y = 0.2,
+           label = "Residen en vivienda colectiva",
+           hjust = 0, size = 7,
+           color = color_texto) +
+  
+  xlim(0, 10) +
+  ylim(0, 3) +
+  
+  theme_void()
+  # =====================================================
+  # 🔹 mapa (solo esa comuna)
+  base_proj <- st_transform(base_df, 3857)
+  coords <- st_coordinates(base_proj) |> as.data.frame()
+  
+  hotspot <- ggplot() +
+    geom_density_2d_filled(
+      data = coords,
+      aes(X, Y, fill = after_stat(level)),
+      bins = 8,
+      alpha = 0.6,
+      show.legend = FALSE
+    ) +
+    geom_sf(
+      data = comuna_pol,
+      fill = NA,
+      color = "gray80"
+    ) +
+    geom_sf(
+      data = st_union(comuna_pol),
+      fill = NA,
+      color = "black",
+      size = 0.6
+    ) +
+    coord_sf() +
+    theme_void()
+  
+  # =====================================================
+  # 🔹 layout
+  layout_final <-
+  (
+    hotspot | tipo_def_plot
+  ) /
+  (
+    indicadores_plot | piramide_plot
+  ) +
+  plot_layout(
+    widths = c(1, 2.5),     # 👈 más espacio a la derecha (piramide)
+    heights = c(1.2, 1)
+  )
+
+layout_final <-
+   layout_final +
+  plot_annotation(
+    title = paste("Caracterización - ", comuna_sel),
+    theme = theme(
+      plot.title = element_text(
+        size = 26,
+        face = "bold",
+        color = color_base,
+        hjust = 0.5),
+        plot.margin = margin(5, 5, 5, 5)
+      )
+    )
+      
+}
+```
+
+
+```{r itero_por_comuna, fig.width=16, fig.height=10}
+for (c in comunas) {
+  cat("\\newpage\n")
+  print(armar_layout_comuna(c))
+}
+```
 # Anexo {-}
 
 ## Notas metodológicas
