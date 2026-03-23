@@ -3,10 +3,14 @@ format:
   pdf:
     dev: cairo_pdf
 fontsize: 11pt
-geometry: a4paper, landscape    
+geometry: a4paper, landscape, margin=1.5cm
+execute:
+  echo: false
+  warning: false
+  message: false   
 ---
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE}
+```{r setup, echo=FALSE, warning=FALSE, message=FALSE}
 knitr::opts_chunk$set(
   echo = FALSE,      
   warning = FALSE,   
@@ -15,7 +19,7 @@ knitr::opts_chunk$set(
 ```
 
 
-```{r }
+```{r librerias}
 library(tidyverse)
 library(janitor)
 library(sf)
@@ -26,23 +30,26 @@ library(stringr)
 ```
 
 
-```{r}
+```{r cargo_archivos}
 base <- read_csv(here("data/processed/usig/usig_marzo.csv"))
 base_sf <- st_read(here("data/processed/usig/usig_direcciones_cud_marzo.gpkg"), quiet = TRUE)
 
-url_comunas_caba <- paste0(
-  "https://wms.ign.gob.ar/geoserver/ows?",
-  "service=WFS&version=1.1.0&request=GetFeature&",
-  "typeName=ign:departamento&outputFormat=application/json&",
-  "cql_filter=gna='Comuna'"
-)
+#url_comunas_caba <- paste0(
+#  "https://wms.ign.gob.ar/geoserver/ows?",
+#  "service=WFS&version=1.1.0&request=GetFeature&",
+#  "typeName=ign:departamento&outputFormat=application/json&",
+#  "cql_filter=gna='Comuna'"
+#)
 
-comunas_caba <- st_read(url_comunas_caba, quiet = TRUE) %>%
-  mutate(comuna = nam) %>%
-  select(comuna, geometry)
+#comunas_caba <- st_read(url_comunas_caba, quiet = TRUE) %>%
+#  mutate(comuna = nam) %>%
+#  select(comuna, geometry)
+#st_write(comunas_caba, here('data/ign/comunas_caba.gpkg'))
+
+comunas_caba <- st_read(here('data/ign/comunas_caba.gpkg'), quiet = TRUE)
 ```
 
-```{r}
+```{r indicadores}
 personas_cud <- nrow(base)
 
 tipo_def_pct <- base %>%    
@@ -58,7 +65,7 @@ color_base <- "#7b2cbf"
 ```
 
 
-```{r}
+```{r tipo_def_plot}
 tipo_def_plot <- base |>
   count(tipo_de_deficiencia_simple_multiple) |>
   mutate(pct = n / sum(n)) |>
@@ -96,11 +103,10 @@ tipo_def_plot <- base |>
     axis.text = element_text(color = "#2b2b2b"),
     legend.position = "none"
   )
-
 ```
 
 
-```{r}
+```{r piramide_plot}
 # =====================================================
 # PIRÁMIDE POBLACIONAL
 # =====================================================
@@ -171,7 +177,7 @@ piramide_plot <- piramide_plot +
 ```
 
 
-```{r}
+```{r indicadores_plot}
 color_base <- "#7b2cbf"
 color_texto <- "#2b2b2b"
 
@@ -223,7 +229,7 @@ indicadores_plot <- ggplot() +
 ```
 
 
-```{r}
+```{r grafico_mapa}
 base_proj <- st_transform(base_sf, 3857)
 comunas_proj <- st_transform(comunas_caba, 3857)
 
@@ -275,7 +281,7 @@ hotspot <- ggplot() +
   theme_void()        
 ```
 
-```{r}
+```{r layout}
 layout_final <-
   (
     hotspot | tipo_def_plot
@@ -294,21 +300,19 @@ layout_final <-
     title = "Caracterización de personas con CUD. Total CABA",
     theme = theme(
       plot.title = element_text(
-        size = 20,
+        size = 26,
         face = "bold",
         color = color_base,
-        hjust = 0.5
+        hjust = 0.5),
+        plot.margin = margin(5, 5, 5, 5)
       )
     )
-  )
-
 ```
 
 
-```{r, fig.width=11, fig.height=7}
+```{r imprimo_layout, fig.width=16, fig.height=10}
 layout_final
 ```
-
 
 \newpage
 
