@@ -33,21 +33,29 @@ library(stringr)
 ```{r cargo_archivos}
 base <- read_csv(here("data/processed/usig/usig_marzo.csv"))
 base_sf <- st_read(here("data/processed/usig/usig_direcciones_cud_marzo.gpkg"), quiet = TRUE)
-
-#url_comunas_caba <- paste0(
-#  "https://wms.ign.gob.ar/geoserver/ows?",
-#  "service=WFS&version=1.1.0&request=GetFeature&",
-#  "typeName=ign:departamento&outputFormat=application/json&",
-#  "cql_filter=gna='Comuna'"
-#)
-
-#comunas_caba <- st_read(url_comunas_caba, quiet = TRUE) %>%
-#  mutate(comuna = nam) %>%
-#  select(comuna, geometry)
-#st_write(comunas_caba, here('data/ign/comunas_caba.gpkg'))
-
-comunas_caba <- st_read(here('data/ign/comunas_caba.gpkg'), quiet = TRUE)
 ```
+
+
+```{r}
+#| eval: false
+
+url_comunas_caba <- paste0(
+  "https://wms.ign.gob.ar/geoserver/ows?",
+  "service=WFS&version=1.1.0&request=GetFeature&",
+  "typeName=ign:departamento&outputFormat=application/json&",
+  "cql_filter=gna='Comuna'"
+)
+
+comunas_caba <- st_read(url_comunas_caba, quiet = TRUE) %>%
+  mutate(comuna = nam) %>%
+  select(comuna, geometry)
+st_write(comunas_caba, here('data/raw/ign/comunas_caba.gpkg'))
+```
+
+```{r}
+comunas_caba <- st_read(here('data/raw/ign/comunas_caba.gpkg'), quiet = TRUE)
+```
+
 
 ```{r indicadores}
 personas_cud <- nrow(base)
@@ -318,6 +326,11 @@ layout_final
 
 ```{r}
 comunas <- sort(unique(base_sf$comuna))
+
+comunas <- comunas[
+  order(as.numeric(str_extract(comunas, "\\d+")))
+]
+
 total_caba <- nrow(base_sf)
 
 armar_layout_comuna <- function(comuna_sel) {
@@ -457,28 +470,53 @@ piramide_plot <- piramide_plot +
   # 🔹 mapa (solo esa comuna)
   base_proj <- st_transform(base_df, 3857)
   coords <- st_coordinates(base_proj) |> as.data.frame()
+
+  
   
   hotspot <- ggplot() +
-    geom_density_2d_filled(
-      data = coords,
-      aes(X, Y, fill = after_stat(level)),
-      bins = 8,
-      alpha = 0.6,
-      show.legend = FALSE
-    ) +
-    geom_sf(
-      data = comuna_pol,
-      fill = NA,
-      color = "gray80"
-    ) +
-    geom_sf(
-      data = st_union(comuna_pol),
-      fill = NA,
-      color = "black",
-      size = 0.6
-    ) +
-    coord_sf() +
-    theme_void()
+  
+  geom_density_2d_filled(
+    data = coords,
+    aes(
+      X, Y,
+      fill = after_stat(level),
+      alpha = after_stat(as.numeric(level))   # 👈 ACÁ
+    ),
+    bins = 10,
+    adjust = 1.2,
+    show.legend = FALSE
+  ) +
+  
+  scale_fill_viridis_d(
+    option = "magma",
+    direction = -1
+  ) +
+  
+  scale_alpha(
+    range = c(0.1, 0.6),   # 👈 y esto
+    guide = "none"
+  ) +
+  
+  geom_sf(
+    data = comuna_pol,
+    fill = NA,
+    color = "gray80",
+    size = 0.3    
+  ) +
+   
+  geom_sf(
+    data = st_union(comuna_pol),
+    fill = NA,
+    color = "black",
+    size = 0.4
+  ) +
+  
+  coord_sf(expand = FALSE) +
+  
+  labs(title = "Densidad de Personas con CUD") +
+  
+  theme_void()    
+
   
   # =====================================================
   # 🔹 layout
@@ -520,18 +558,7 @@ for (c in comunas) {
 ```
 # Anexo {-}
 
-## Notas metodológicas
-Puede existir subrepresentación de población residente en villas o asentamientos debido a la ausencia de direcciones formales (calle y altura), lo que limita la geocodificación automática.
-
-Una respuesta exitosa indica que la API pudo asignar coordenadas, pero no garantiza exactitud absoluta. Por ejemplo, si se ingresa únicamente "Perón" como nombre de calle, la API puede devolver una coordenada asociada a una calle con ese nombre. Sin embargo, en la Ciudad de Buenos Aires existen calles como "Eva Perón" y "Juan Domingo Perón". Si el domicilio original corresponde a "Eva Perón" pero se carga únicamente "Perón", el sistema puede asignar una ubicación válida pero incorrecta. Este tipo de ambigüedades en la información de origen puede afectar la precisión de la geocodificación.
-
-Protección de datos y confidencialidad
-
-El análisis se presenta con fines exploratorios. Para preservar la confidencialidad de la información personal, la información se presenta de forma agregada y no expone datos identificatorios de las personas.
-
-Se prioriza la presentación de indicadores sintéticos y distribuciones agregadas. La información presentada no permite identificar personas específicas.
-
-Alcances y limitaciones del análisis
+## Alcances y limitaciones del análisis
 
 El presente informe tiene un carácter exploratorio y descriptivo, y se basa en registros administrativos disponibles al momento del corte.
 
@@ -545,18 +572,3 @@ Puede existir subrepresentación de ciertos grupos poblacionales, en particular 
 
 Los resultados deben interpretarse como una aproximación a la distribución y características de la población con CUD, y no como valores absolutos o definitivos.
 
-
-
-Por comuna (y total caba)
-
-Hotspot (imagen del mapa centrado en la comuna, del lado izquierdo de los demas datos)
-
-Total personas con CUD
-
-Porcentaje de personas con CUD sobre el total de personas con CUD CABA
-
-Piramide poblacional edad_grupos quinquenales
-
-Tipo de deficiencia
-
-% de personas con CUD en vivienda colectiva
