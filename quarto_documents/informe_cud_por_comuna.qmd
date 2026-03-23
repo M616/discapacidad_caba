@@ -1,19 +1,34 @@
 ---
-title: "Untitled"
-format: html
+format:
+  pdf:
+    dev: cairo_pdf
+fontsize: 11pt
+geometry: a4paper, landscape    
 ---
 
-```{r}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE,      
+  warning = FALSE,   
+  message = FALSE    
+)
+```
+
+
+```{r }
 library(tidyverse)
 library(janitor)
 library(sf)
 library(patchwork)
+library (here)
+library(stringr)
+ library(scales)
 ```
 
 
 ```{r}
-base <- read_csv("data/processed/usig/usig_marzo.csv")
-base_sf <- st_read("data/processed/usig/usig_direcciones_cud_marzo.gpkg")
+base <- read_csv(here("data/processed/usig/usig_marzo.csv"))
+base_sf <- st_read(here("data/processed/usig/usig_direcciones_cud_marzo.gpkg"), quiet = TRUE)
 
 url_comunas_caba <- paste0(
   "https://wms.ign.gob.ar/geoserver/ows?",
@@ -91,6 +106,9 @@ tipo_def_plot <- base |>
 # =====================================================
 
 # 1. Agrupar
+
+base$grupos_quinquenales <- str_remove(base$grupos_quinquenales, " años")
+
 piramide <- base %>%
   filter(sexo %in% c("Masculino", "Femenino")) %>%
   count(grupos_quinquenales, sexo) %>%
@@ -117,12 +135,12 @@ piramide <- piramide %>%
 # 4. Gráfico
 piramide_long <- piramide %>%
   pivot_longer(cols = c(Masculino, Femenino),
-               names_to = "sexo",
-               values_to = "cantidad")
+               names_to = "Sexo",
+               values_to = "Cantidad")
 
 
 piramide_plot <- 
-    ggplot(piramide_long, aes(x = cantidad, y = grupos_quinquenales, fill = sexo)) +
+    ggplot(piramide_long, aes(x = Cantidad, y = grupos_quinquenales, fill = Sexo)) +
   geom_col() +
   geom_vline(xintercept = 0) +
   labs(
@@ -157,28 +175,45 @@ piramide_plot <- piramide_plot +
 color_base <- "#7b2cbf"
 color_texto <- "#2b2b2b"
 
+formato_ar <- label_number(
+  big.mark = ".",
+  decimal.mark = ","
+)
+
+formato_pct_ar <- label_percent(
+  decimal.mark = ",",
+  big.mark = ".",
+  accuracy = 0.1
+)
+
 indicadores_plot <- ggplot() +
   
   # Total CUD
   annotate("text", x = 0, y = 2.6,
-           label = scales::comma(personas_cud),
-           hjust = 0, size = 10, fontface = "bold",
+           label = formato_ar(personas_cud),
+           hjust = 0, 
+           size = 10, 
+           fontface = "bold",
            color = color_base) +
   
   annotate("text", x = 0, y = 2.1,
            label = "Total de personas con CUD",
-           hjust = 0, size = 8, vjust = -0.1,
+           hjust = 0,
+           size = 8,
            color = color_texto) +
   
   # Porcentaje vivienda colectiva
   annotate("text", x = 0, y = 1.2,
-           label = paste0(round(porc_vivienda_colectiva,1), "%"),
-           hjust = 0, size = 10, fontface = "bold",
+           label = formato_pct_ar(porc_vivienda_colectiva / 100),
+           hjust = 0,
+           size = 10,
+           fontface = "bold",
            color = color_base) +
   
   annotate("text", x = 0, y = 0.7,
            label = "Residen en vivienda colectiva",
-           hjust = 0, size = 8, vjust = -0.1,
+           hjust = 0,
+           size = 8,
            color = color_texto) +
   
   xlim(0, 10) +
@@ -243,17 +278,18 @@ hotspot <- ggplot() +
 ```{r}
 layout_final <-
   (
-    hotspot | tipo_def_plot   # 🔥 fila superior
+    hotspot | tipo_def_plot
   ) /
   (
-    indicadores_plot | piramide_plot    # 🔥 fila inferior
+    indicadores_plot | piramide_plot
   ) +
   plot_layout(
-    widths = c(1, 2),    # 🔥 mapa chico, barras grandes
+    widths = c(1, 2.5),     # 👈 más espacio a la derecha (piramide)
     heights = c(1.2, 1)
   )
 
-layout_final +
+layout_final <-
+   layout_final +
   plot_annotation(
     title = "Caracterización de personas con CUD. Total CABA",
     theme = theme(
@@ -268,8 +304,17 @@ layout_final +
 
 ```
 
-Notas metodológicas, alcances y limitaciones
 
+```{r, fig.width=11, fig.height=7}
+layout_final
+```
+
+
+\newpage
+
+# Anexo {-}
+
+## Notas metodológicas
 Puede existir subrepresentación de población residente en villas o asentamientos debido a la ausencia de direcciones formales (calle y altura), lo que limita la geocodificación automática.
 
 Una respuesta exitosa indica que la API pudo asignar coordenadas, pero no garantiza exactitud absoluta. Por ejemplo, si se ingresa únicamente "Perón" como nombre de calle, la API puede devolver una coordenada asociada a una calle con ese nombre. Sin embargo, en la Ciudad de Buenos Aires existen calles como "Eva Perón" y "Juan Domingo Perón". Si el domicilio original corresponde a "Eva Perón" pero se carga únicamente "Perón", el sistema puede asignar una ubicación válida pero incorrecta. Este tipo de ambigüedades en la información de origen puede afectar la precisión de la geocodificación.
