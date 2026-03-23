@@ -411,11 +411,15 @@ armar_layout_comuna <- function(comuna_sel) {
       aes(label = scales::percent(pct, accuracy = 0.1)),
       hjust = -0.1, size = 3
     ) +
+      labs(
+    title = "Tipo de deficiencia",
+    y = "Cantidad de personas",
+    x = NULL
+  ) +
     coord_flip() +
     theme_minimal() +
-    theme(legend.position = "none",
-    axis.title.y = element_blank()
-         )
+    theme(legend.position = "none")
+    #axis.title.y = element_blank()         )
   
   # =====================================================
   # 🔹 pirámide
@@ -595,7 +599,11 @@ layout_final <-
 ```
 
 
-```{r itero_por_comuna, fig.width=16, fig.height=10}
+```{r itero_por_comuna}
+#| results: asis
+#| fig.width: 16
+#| fig.height: 10
+
 for (c in comunas) {
   cat("\\newpage\n")
   print(armar_layout_comuna(c))
