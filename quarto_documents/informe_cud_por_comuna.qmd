@@ -135,8 +135,8 @@ tipo_def_plot <- base |>
   labs(
     title = "Tipo de deficiencia",
     #subtitle = texto_metricas,
-    y = "Cantidad de personas",
-    x = NULL
+    y = "Cantidad de personas"
+    #x = NULL
   ) +
 
   coord_flip() +
@@ -151,7 +151,8 @@ tipo_def_plot <- base |>
     plot.title = element_text(face = "bold", size = 13, color = color_base),
     plot.subtitle = element_text(size = 10),
     axis.text = element_text(color = "#2b2b2b"),
-    legend.position = "none"
+    legend.position = "none",
+    axis.title.y = element_blank()
   )
 ```
 
@@ -412,7 +413,9 @@ armar_layout_comuna <- function(comuna_sel) {
     ) +
     coord_flip() +
     theme_minimal() +
-    theme(legend.position = "none")
+    theme(legend.position = "none",
+    axis.title.y = element_blank()
+         )
   
   # =====================================================
   # 🔹 pirámide
