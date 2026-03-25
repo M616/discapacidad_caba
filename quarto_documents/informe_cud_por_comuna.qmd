@@ -8,7 +8,7 @@ header-includes:
   - \definecolor{violeta}{HTML}{7B2CBF}
 
 fontsize: 11pt
-geometry: a4paper, landscape, margin=1.5cm
+geometry: a4paper, landscape, margin=1.5cm, bottom=2cm
 
 execute:
   echo: false
@@ -66,9 +66,9 @@ library(tidyverse)
 library(janitor)
 library(sf)
 library(patchwork)
-library (here)
+library(here)
 library(stringr)
- library(scales)
+library(scales)
 ```
 
 
@@ -92,10 +92,24 @@ comunas_caba <- st_read(url_comunas_caba, quiet = TRUE) %>%
   mutate(comuna = nam) %>%
   select(comuna, geometry)
 st_write(comunas_caba, here('data/raw/ign/comunas_caba.gpkg'))
+
+url <- 'https://cdn.buenosaires.gob.ar/datosabiertos/datasets/innovacion-transformacion-digital/barrios/barrios.geojson'
+
+barrios <- st_read(url)
+
+barrios <- st_transform(barrios, 3857)
+
+barrios <- 
+  barrios |> 
+  mutate(comuna = paste('Comuna', comuna))
+
+st_write(barrios, here('data/raw/idecba/barrios_caba.gpkg'))
 ```
 
 ```{r}
 comunas_caba <- st_read(here('data/raw/ign/comunas_caba.gpkg'), quiet = TRUE)
+
+barrios <- st_read(here('data/raw/idecba/barrios_caba.gpkg'), quiet = TRUE)
 ```
 
 
@@ -382,6 +396,10 @@ armar_layout_comuna <- function(comuna_sel) {
   base_df <- base_sf |> 
     filter(comuna == comuna_sel)
 
+  barrio_comuna <- 
+    barrios |> 
+    filter(comuna == comuna_sel)
+
   comuna_pol <- 
     comunas_caba |> 
     filter(comuna == comuna_sel) |> 
@@ -519,8 +537,6 @@ piramide_plot <- piramide_plot +
   # 🔹 mapa (solo esa comuna)
   base_proj <- st_transform(base_df, 3857)
   coords <- st_coordinates(base_proj) |> as.data.frame()
-
-  
   
   hotspot <- ggplot() +
   
@@ -547,18 +563,24 @@ piramide_plot <- piramide_plot +
   ) +
   
   geom_sf(
-    data = comuna_pol,
+    data = barrio_comuna,
     fill = NA,
     color = "gray80",
     size = 0.3    
   ) +
    
   geom_sf(
-    data = st_union(comuna_pol),
+    data = st_union(barrio_comuna),
     fill = NA,
     color = "black",
     size = 0.4
   ) +
+  geom_sf_text(
+  data = barrio_comuna,
+  aes(label = nombre),
+  size = 2.5,
+  color = "gray30"
+)  +
   
   coord_sf(expand = FALSE) +
   
@@ -609,7 +631,6 @@ for (c in comunas) {
   print(armar_layout_comuna(c))
 }
 ```
-# Anexo {-}
 
 ## Alcances y limitaciones del análisis
 
@@ -619,7 +640,7 @@ La información corresponde a personas con Certificado Único de Discapacidad (C
 
 La calidad de los resultados depende de la consistencia y completitud de los datos de origen, pudiendo existir registros con información incompleta o categorizaciones generales.
 
-La asignación territorial a comunas se realizó mediante procesos de geocodificación automática, lo que implica posibles imprecisiones en la localización de algunos domicilios, especialmente en casos de direcciones ambiguas o incompletas.
+La asignación territorial a comunas se realizó mediante geocodificación automática, lo que puede generar imprecisiones en casos de direcciones ambiguas o incompletas. Se logró georreferenciar el 84% de los domicilios. La diferencia entre el total de casos de CABA y la suma por comunas responde a los registros que no pudieron ser asignados territorialmente.
 
 Puede existir subrepresentación de ciertos grupos poblacionales, en particular en áreas con menor formalización de direcciones o con barreras de acceso a la certificación.
 
