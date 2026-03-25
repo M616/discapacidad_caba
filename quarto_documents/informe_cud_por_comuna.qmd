@@ -634,7 +634,7 @@ for (c in comunas) {
 
 ## Alcances y limitaciones del análisis
 
-El presente informe tiene un carácter exploratorio y descriptivo, y se basa en registros administrativos disponibles al momento del corte.
+El presente informe tiene un carácter exploratorio y descriptivo, y se basa en registros administrativos disponibles al momento del corte (marzo de 2026).
 
 La información corresponde a personas con Certificado Único de Discapacidad (CUD) vigente, por lo que no representa la totalidad de la población con discapacidad, sino únicamente a quienes cuentan con certificación.
 
