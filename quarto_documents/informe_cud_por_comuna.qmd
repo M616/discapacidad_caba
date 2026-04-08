@@ -5,7 +5,7 @@ format:
 
 header-includes:
   - \usepackage{xcolor}
-  - \definecolor{violeta}{HTML}{7B2CBF}
+  - \definecolor{violeta}{HTML}{153244}
 
 fontsize: 11pt
 geometry: a4paper, landscape, margin=1.5cm, bottom=2cm
@@ -125,7 +125,13 @@ porc_vivienda_colectiva <- mean(
   na.rm = TRUE
 ) * 100
 
-color_base <- "#7b2cbf"
+#color_base <- "#7b2cbf"# Color base: amarillo PRO
+
+color_base <- "#FFCC00"       # amarillo principal
+color_secundario <- "#153244" # azul oscuro para contraste
+color_acento <- "#8DE2D6"     # turquesa para detalles/accentos
+color_texto <- "#2B2B2B"      # gris oscuro para textos y ejes
+
 ```
 
 
@@ -181,9 +187,9 @@ tipo_def_plot <- base |>
 base$grupos_quinquenales <- str_remove(base$grupos_quinquenales, " años")
 
 piramide <- base %>%
-  filter(sexo %in% c("Masculino", "Femenino")) %>%
-  count(grupos_quinquenales, sexo) %>%
-  pivot_wider(names_from = sexo, values_from = n, values_fill = 0)
+    filter(sexo %in% c("Masculino", "Femenino")) %>%
+    count(grupos_quinquenales, sexo) %>%
+    pivot_wider(names_from = sexo, values_from = n, values_fill = 0)
 
 # 2. Hombres en negativo
 piramide <- piramide %>%
@@ -209,21 +215,20 @@ piramide_long <- piramide %>%
                names_to = "Sexo",
                values_to = "Cantidad")
 
-
 piramide_plot <- 
     ggplot(piramide_long, aes(x = Cantidad, y = grupos_quinquenales, fill = Sexo)) +
   geom_col() +
-  geom_vline(xintercept = 0) +
+  geom_vline(xintercept = 0, color = color_secundario) +
+  scale_fill_manual(values = c(
+    "Masculino" = scales::alpha(color_base, 0.8),
+    "Femenino" = scales::alpha(color_base, 0.5)
+  )) +
   labs(
     title = "Pirámide poblacional",
     x = "Cantidad de personas",
     y = "Grupos quinquenales"
   ) +
-    scale_fill_manual(values = c(
-    #"Masculino" = color_base,
-    #"Femenino" = scales::alpha(color_base, 0.5)
-    "Masculino" = "#5a189a",
-    "Femenino" = "#9d4edd")  ) +
+  
   theme_minimal()+
   labs(
   title = "Pirámide poblacional",
@@ -234,7 +239,7 @@ piramide_plot <-
   guides(fill = guide_legend(reverse = TRUE))     
 
 
-max_val <- max(abs(c(piramide$Masculino, piramide$Femenino)))
+max_val  <- max(abs(c(piramide$Masculino, piramide$Femenino)))
 
 piramide_plot <- piramide_plot +
   scale_x_continuous(limits = c(-max_val, max_val))   # 🔥 clave
@@ -243,8 +248,8 @@ piramide_plot <- piramide_plot +
 
 
 ```{r indicadores_plot}
-color_base <- "#7b2cbf"
-color_texto <- "#2b2b2b"
+#color_base <- "#7b2cbf"
+#color_texto <- "#2b2b2b"
 
 formato_ar <- label_number(
   big.mark = ".",
@@ -301,49 +306,14 @@ comunas_proj <- st_transform(comunas_caba, 3857)
 coords <- st_coordinates(base_proj)
 df_coords <- as.data.frame(coords)
 
-hotspot <- ggplot() +
-  
-  geom_density_2d_filled(
-    data = df_coords,
-    aes(
-      X, Y,
-      fill = after_stat(level),
-      alpha = after_stat(as.numeric(level))   # 👈 ACÁ
-    ),
-    bins = 10,
-    adjust = 1.2,
-    show.legend = FALSE
-  ) +
-  
-  scale_fill_viridis_d(
-    option = "magma",
-    direction = -1
-  ) +
-  
-  scale_alpha(
-    range = c(0.1, 0.6),   # 👈 y esto
-    guide = "none"
-  ) +
-  
-  geom_sf(
-    data = comunas_proj,
-    fill = NA,
-    color = "gray80",
-    size = 0.3    
-  ) +
-   
-  geom_sf(
-    data = st_union(comunas_proj),
-    fill = NA,
-    color = "black",
-    size = 0.4
-  ) +
-  
-  coord_sf(expand = FALSE) +
-  
-  labs(title = "Densidad de Personas con CUD") +
-  
-  theme_void()        
+hotspot <- 
+  ggplot() + 
+  geom_density_2d_filled( data = df_coords, aes( X, Y, fill = after_stat(level), alpha = after_stat(as.numeric(level)) ), bins = 10, adjust = 1.2, show.legend = FALSE ) + 
+  # Reemplazamos viridis por amarillo degradado similar 
+  scale_fill_manual(values = scales::alpha(c( "#FFFACD", "#FFFAA0", "#FFF66B", "#FFF133", "#FFEB00", "#FFD700", "#FFC700", "#FFCC00", "#FFB800", "#FFA500" ), 0.8))   +
+   scale_alpha( range = c(0.1, 0.6), guide = "none" ) + geom_sf( data = comunas_proj, fill = NA, color = "#153244", 
+   # azul oscuro 
+   size = 0.3 ) + geom_sf( data = st_union(comunas_proj), fill = NA, color = "#153244", size = 0.4 ) + coord_sf(expand = FALSE) + labs(title = "Densidad de Personas con CUD") + theme_void() 
 ```
 
 ```{r layout}
@@ -466,17 +436,16 @@ armar_layout_comuna <- function(comuna_sel) {
     )
   ) +
   geom_col() +
-  geom_vline(xintercept = 0) +
+  geom_vline(xintercept = 0, color = color_secundario) +
+  scale_fill_manual(values = c(
+    "Masculino" = scales::alpha(color_base, 0.8),
+    "Femenino" = scales::alpha(color_base, 0.5)
+  ))+
   labs(
     title = "Pirámide poblacional",
     x = "Cantidad de personas",
     y = "Grupos quinquenales"
   ) +
-    scale_fill_manual(values = c(
-    #"Masculino" = color_base,
-    #"Femenino" = scales::alpha(color_base, 0.5)
-    "Masculino" = "#5a189a",
-    "Femenino" = "#9d4edd")  ) +
   theme_minimal()+
   labs(
   title = "Pirámide poblacional",
@@ -552,18 +521,11 @@ piramide_plot <- piramide_plot +
     show.legend = FALSE
   ) +
   
-  scale_fill_viridis_d(
-    option = "magma",
-    direction = -1
-  ) +
-  
-  scale_alpha(
-    range = c(0.1, 0.6),   # 👈 y esto
-    guide = "none"
-  ) +
-  
-  geom_sf(
-    data = barrio_comuna,
+  #scale_fill_viridis_d(option = "magma",direction = -1) +
+  #scale_alpha(range = c(0.1, 0.6), guide = "none") +
+  scale_fill_manual(values = scales::alpha(c( "#FFFACD", "#FFFAA0", "#FFF66B", "#FFF133", "#FFEB00", "#FFD700", "#FFC700", "#FFCC00", "#FFB800", "#FFA500" ), 0.8))   +
+  scale_alpha( range = c(0.1, 0.6), guide = "none" ) + 
+  geom_sf(data = barrio_comuna,
     fill = NA,
     color = "gray80",
     size = 0.3    
@@ -572,7 +534,8 @@ piramide_plot <- piramide_plot +
   geom_sf(
     data = st_union(barrio_comuna),
     fill = NA,
-    color = "black",
+    #color = "black",
+    color = "#153244",
     size = 0.4
   ) +
   geom_sf_text(
