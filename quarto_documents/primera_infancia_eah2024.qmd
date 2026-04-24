@@ -1,0 +1,304 @@
+---
+title: "Caracterización de la población de 0 a 5 años con discapacidad  
+Ciudad de Buenos Aires – EAH 2024
+-- BORRADOR --"
+author: "Marcos May"
+date: "`r Sys.Date()`"
+format:
+  pdf:
+    toc: false
+    number-sections: true
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+## Introducción
+
+El presente informe describe las características de la población de 0 a 5 años con dificultades o discapacidad en la Ciudad de Buenos Aires, a partir de la Encuesta Anual de Hogares 2024.
+
+Se analizan dimensiones vinculadas al tipo de dificultad, características biológicas y condiciones socioambientales del hogar, incluyendo tipo de vivienda, localización territorial y hacinamiento.
+
+## Consideraciones metodológicas
+
+El análisis se basa en un subconjunto reducido de casos: 28 niños y niñas de 0 a 5 años con dificultades o discapacidad identificados en la muestra de la Encuesta Anual de Hogares 2024.
+
+Debido al tamaño muestral acotado, los resultados deben interpretarse con cautela. En particular:
+
+- No se presentan estimaciones en porcentaje, ya que pequeñas variaciones en el número de casos pueden generar cambios significativos en las proporciones.
+- No se aplica el factor de expansión muestral, dado que su utilización sobre un número tan reducido de observaciones puede producir estimaciones altamente inestables y poco confiables.
+- El análisis se mantiene en un nivel descriptivo, orientado a explorar patrones y características generales, sin pretensión de inferencia poblacional.
+
+En este sentido, los resultados deben leerse como una aproximación exploratoria que permite identificar tendencias y posibles desigualdades, más que como estimaciones representativas del total de la población.
+
+```{r}
+library(tidyverse)
+library(survey)
+library(srvyr)
+library(ggthemes)
+library(kableExtra)
+
+options(scipen = 999)
+
+enlace <- 'https://www.estadisticaciudad.gob.ar/eyc/wp-content/uploads/2025/04/eah2024_bu_ampliada.zip'
+temp_dir <- tempdir()
+temp_zip <- file.path(temp_dir, "archivo_descargado.zip")
+
+download.file(url = enlace, destfile = temp_zip, method = "auto", mode = "wb")
+unzip(zipfile = temp_zip, exdir = temp_dir)
+
+archivos_descomprimidos <- list.files(temp_dir, full.names = TRUE)
+
+base0 <- read_delim(archivos_descomprimidos[5], delim = ';')
+hogares <- read_delim(archivos_descomprimidos[3], delim = ';')
+
+vivienda <- hogares %>%
+  select(id, v2_2, v4, hacinam_2) %>%
+  distinct()
+
+base0 <- base0 %>%
+  left_join(vivienda, by = "id") %>%
+  mutate(
+    sexo = factor(sexo, levels = c(1, 2), labels = c("Varon", "Mujer"))
+  )
+
+  base <- base0 %>%
+  filter(edad < 6) %>%
+  filter(entrea_md == 1)
+```
+
+```{r}
+base |> count(edad) |> kable()
+```
+
+```{r}
+base |> count(sexo) |> kable()
+```
+## Tipo de dificultad
+
+A continuación se presenta la distribución de los distintos tipos de dificultad en la población analizada, así como su desagregación por sexo.
+
+```{r}
+base %>%
+  select(
+    sexo,
+    motora = dd_tipo_dif1,
+    visual = dd_tipo_dif2,
+    auditiva = dd_tipo_dif3,
+    habla_comunicacion = dd_tipo_dif4,
+    mental_cognitiva = dd_tipo_dif5,
+    cuidado_si = dd_tipo_dif6
+  ) %>%
+  pivot_longer(
+    cols = -sexo,
+    names_to = "tipo",
+    values_to = "valor"
+  ) %>%
+  filter(valor == 1) %>%
+  count(tipo, sexo) %>%
+  group_by(tipo) %>%
+  mutate(total = sum(n)) %>%
+  ungroup() %>%
+  mutate(tipo = reorder(tipo, total)) %>%
+  ggplot(aes(x = n, y = tipo, fill = sexo)) +
+  geom_col() +
+  labs(
+    title = "Tipos de dificultad por sexo",
+    x = "Cantidad de niños/as",
+    y = "",
+    fill = "Sexo"
+  ) +
+  scale_fill_brewer(palette = "Set2") +
+  theme_minimal()
+
+```
+
+## Condiciones de la vivienda
+
+Se analiza el tipo de vivienda en el que residen los niños y niñas, como indicador de las condiciones habitacionales.
+
+```{r}
+base %>%
+  mutate(
+    tipo_vivienda = case_when(
+      v2_2 == 1 ~ "Casa",
+      v2_2 == 2 ~ "Departamento",
+      v2_2 == 9 ~ "Inquilinato / conventillo",
+      v2_2 == 10 ~ "Hotel / pension",
+      v2_2 == 5 ~ "No destinada a vivienda",
+      v2_2 == 8 ~ "Otro",
+      TRUE ~ NA_character_
+    )
+  ) %>%
+  count(tipo_vivienda) %>%
+  mutate(tipo_vivienda = reorder(tipo_vivienda, n)) %>%
+  ggplot(aes(x = n, y = tipo_vivienda, fill = tipo_vivienda)) +
+  geom_col(show.legend = FALSE) +
+  labs(
+    title = "Distribución del tipo de vivienda",
+    x = "Cantidad de casos",
+    y = ""
+  ) +
+  scale_fill_brewer(palette = "Pastel1") +
+  theme_minimal()
+base %>%
+  mutate(
+    tipo_vivienda = case_when(
+      v2_2 == 1 ~ "Casa",
+      v2_2 == 2 ~ "Departamento",
+      v2_2 == 9 ~ "Inquilinato / conventillo",
+      v2_2 == 10 ~ "Hotel / pension",
+      v2_2 == 5 ~ "No destinada a vivienda",
+      v2_2 == 8 ~ "Otro",
+      TRUE ~ NA_character_
+    )
+  ) %>%
+  select(
+    tipo_vivienda,
+    motora = dd_tipo_dif1,
+    visual = dd_tipo_dif2,
+    auditiva = dd_tipo_dif3,
+    habla_comunicacion = dd_tipo_dif4,
+    mental_cognitiva = dd_tipo_dif5,
+    cuidado_si = dd_tipo_dif6
+  ) %>%
+  pivot_longer(
+    cols = -tipo_vivienda,
+    names_to = "tipo",
+    values_to = "valor"
+  ) %>%
+  filter(valor == 1) %>%
+  count(tipo, tipo_vivienda) %>%
+  group_by(tipo) %>%
+  mutate(total = sum(n)) %>%
+  ungroup() %>%
+  mutate(tipo = reorder(tipo, total)) %>%
+  ggplot(aes(x = n, y = tipo, fill = tipo_vivienda)) +
+  geom_col() +
+  labs(
+    title = "Tipos de dificultad por tipo de vivienda",
+    x = "Cantidad de niños/as",
+    y = "",
+    fill = "Tipo de vivienda"
+  ) +
+  scale_fill_brewer(palette = "Paired") +
+  theme_minimal()
+
+```
+
+## Localización territorial
+
+Se presenta la distribución de la población según dominio, distinguiendo entre viviendas ubicadas en villas y en el resto de la ciudad.
+
+```{r}
+base %>%
+  mutate(
+    dominio_rec = case_when(
+      dominio == 3 ~ "Villa",
+      dominio == 4 ~ "Resto de la ciudad",
+      TRUE ~ NA_character_
+    )
+  ) %>%
+  count(dominio_rec) %>%
+  mutate(dominio_rec = reorder(dominio_rec, n)) %>%
+  ggplot(aes(x = n, y = dominio_rec, fill = dominio_rec)) +
+  geom_col(show.legend = FALSE) +
+  labs(
+    title = "Distribución territorial",
+    x = "Cantidad de casos",
+    y = ""
+  ) +
+  scale_fill_brewer(palette = "Accent") +
+  theme_minimal()
+```
+
+
+## Condiciones de hacinamiento
+
+Se describen las condiciones de hacinamiento en los hogares, como indicador clave de las condiciones socioambientales.
+
+```{r}
+base %>%
+  mutate(
+    hacinamiento = case_when(
+      hacinam_2 == 1 ~ "Sin hacinamiento",
+      hacinam_2 == 2 ~ "Hacinamiento no critico",
+      hacinam_2 == 3 ~ "Hacinamiento critico",
+      hacinam_2 == 0 ~ "Sin habitaciones de uso exclusivo",
+      TRUE ~ NA_character_
+    )
+  ) %>%
+  count(hacinamiento) %>%
+  mutate(hacinamiento = reorder(hacinamiento, n)) %>%
+  ggplot(aes(x = n, y = hacinamiento, fill = hacinamiento)) +
+  geom_col(show.legend = FALSE) +
+  labs(
+    title = "Condiciones de hacinamiento",
+    x = "Cantidad de casos",
+    y = ""
+  ) +
+  scale_fill_brewer(palette = "Pastel2") +
+  theme_minimal()
+```
+
+
+## Condiciones socioambientales
+
+Finalmente, se analizan las relaciones entre tipo de vivienda, localización territorial y condiciones de hacinamiento.
+
+```{r}
+base %>%
+  mutate(
+    dominio_rec = case_when(
+      dominio == 3 ~ "Villa",
+      dominio == 4 ~ "Resto de la ciudad",
+      TRUE ~ NA_character_
+    ),
+    hacinamiento = case_when(
+      hacinam_2 == 1 ~ "Sin",
+      hacinam_2 == 2 ~ "Moderado",
+      hacinam_2 == 3 ~ "Critico",
+      TRUE ~ NA_character_
+    )
+  ) %>%
+  filter(!is.na(hacinamiento)) %>%
+  count(dominio_rec, hacinamiento) %>%
+  ggplot(aes(x = dominio_rec, y = n, fill = hacinamiento)) +
+  geom_col(position = "dodge") +
+  labs(
+    title = "Hacinamiento según dominio",
+    x = "",
+    y = "Cantidad de casos",
+    fill = "Hacinamiento"
+  ) +
+  scale_fill_brewer(palette = "Set3") +
+  theme_minimal()
+base %>%
+  mutate(
+    tipo_vivienda = case_when(
+      v2_2 == 1 ~ "Casa",
+      v2_2 == 2 ~ "Departamento",
+      TRUE ~ "Otros"
+    ),
+    hacinamiento = case_when(
+      hacinam_2 == 1 ~ "Sin",
+      hacinam_2 == 2 ~ "Moderado",
+      hacinam_2 == 3 ~ "Critico",
+      TRUE ~ NA_character_
+    )
+  ) %>%
+  filter(!is.na(hacinamiento)) %>%
+  count(tipo_vivienda, hacinamiento) %>%
+  ggplot(aes(x = tipo_vivienda, y = n, fill = hacinamiento)) +
+  geom_col(position = "dodge") +
+  labs(
+    title = "Tipo de vivienda y hacinamiento",
+    x = "",
+    y = "Cantidad de casos",
+    fill = "Hacinamiento"
+  ) +
+  scale_fill_brewer(palette = "Set3") +
+  theme_minimal()
+```
+
