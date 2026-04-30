@@ -20,6 +20,8 @@ Se analizan dimensiones vinculadas al tipo de dificultad, características biol�
 
 Los gráficos se presentan en formato editable para su adaptación a piezas institucionales.
 
+Entre las niñas y niños de 0 a 5 años que presentan al menos una dificultad funcional, el 69,0 % cuenta con certificado de discapacidad (IC 95 %: 52,3–85,7).
+
 ## Consideraciones metodológicas
 
 El análisis se basa en un subconjunto reducido de casos: 28 niños y niñas de 0 a 5 años con dificultades o discapacidad identificados en la muestra de la Encuesta Anual de Hogares 2024.
@@ -40,7 +42,7 @@ library(ggthemes)
 library(kableExtra)
 library(officer)
 library(rvg)
-
+library(googledrive)
 options(scipen = 999)
 
 enlace <- 'https://www.estadisticaciudad.gob.ar/eyc/wp-content/uploads/2025/04/eah2024_bu_ampliada.zip'
@@ -88,6 +90,32 @@ base |>
 ```{r}
 base |> count(sexo) |> kable()
 ```
+
+```{r}
+
+tabla_cud <- base |>
+  count(sexo, d2a) |>
+  mutate(
+    d2a = recode(
+      d2a,
+      `0` = "Sin certificado",
+      `1` = "Con certificado"
+    )
+  ) |>
+  pivot_wider(
+    names_from = d2a,
+    values_from = n,
+    values_fill = 0
+  )
+
+knitr::kable(
+  tabla_cud,
+  caption = "Niños y niñas de 0 a 5 años con dificultad según tenencia de certificado",
+  col.names = c("Sexo", "Sin certificado", "Con certificado")
+)
+```
+
+
 
 ## Tipo de dificultad
 
@@ -342,77 +370,116 @@ base %>%
   theme_minimal()
 ```
 
-```{r}
-# ================================
-# ANEXO – GRÁFICOS EDITABLES (WORD)
-# ================================
+```{r, eval=FALSE}
+library(openxlsx2)
+library(mschart)
 
-library(officer)
-library(rvg)
 
-# Crear documento Word
-doc <- read_docx()
+# =========================
+# Helper: hoja + gráfico
+# =========================
+add_sheet_chart <- function(wb, sheet, tab, x, y,
+                            title, ylab,
+                            chart_dims = "D2:L20") {
 
-# Función auxiliar para agregar gráfico editable
-add_plot <- function(doc, titulo, plot){
-  doc %>%
-    body_add_par(titulo, style = "heading 2") %>%
-    body_add_dml(ggobj = plot) %>%
-    body_add_par("")
+  # agregar hoja + datos
+  wb <- wb |>
+    wb_add_worksheet(sheet) |>
+    wb_add_data(x = tab, dims = "A1")
+
+  # rango automático A1:...
+  n <- nrow(tab) + 1
+  last_col <- LETTERS[ncol(tab)]
+  rng <- paste0("A1:", last_col, n)
+
+  # gráfico Excel
+  ch <- ms_barchart(
+    data = wb_data(wb, dims = rng),
+    x = x,
+    y = y
+  ) |>
+    chart_labels(
+      title = title,
+      ylab  = ylab
+    )
+
+  # insertar gráfico
+  wb <- wb |>
+    wb_add_mschart(
+      sheet = sheet,
+      dims  = chart_dims,
+      graph = ch
+    )
+
+  wb
 }
-# -------------------------------
-# Gráfico 1: Distribución por sexo
-# -------------------------------
 
-p_sexo <- base %>%
-  count(sexo) %>%
-  ggplot(aes(x = sexo, y = n, fill = sexo)) +
-  geom_col() +
-  scale_fill_manual(values = pal_azules[1:2]) +
-  labs(
-    title = "Distribución por sexo",
-    x = "",
-    y = "Cantidad de casos"
-  ) +
-  theme_minimal()
+# =========================
+# Workbook
+# =========================
+wb <- wb_workbook()
 
-doc <- add_plot(doc, "Figura A1. Distribución por sexo", p_sexo)
+# =========================
+# 1. Distribución por sexo
+# =========================
+tab_sexo <- base |> count(sexo)
 
-# -----------------------------------------
-# Gráfico 2: Tipos de dificultad por sexo
-# -----------------------------------------
+wb <- add_sheet_chart(
+  wb,
+  sheet = "Sexo",
+  tab   = tab_sexo,
+  x     = "sexo",
+  y     = "n",
+  title = "Distribución por sexo (0–5 años)",
+  ylab  = "Cantidad de casos"
+)
 
-p_tipo_sexo <- base %>%
+# =================================
+# 2. Tipos de dificultad por sexo
+# (barras agrupadas)
+# =================================
+tab_tipo_sexo <- base |>
   select(
     sexo,
     motora = dd_tipo_dif1,
     visual = dd_tipo_dif2,
     auditiva = dd_tipo_dif3,
-    habla_comunicacion = dd_tipo_dif4,
-    mental_cognitiva = dd_tipo_dif5,
-    cuidado_si = dd_tipo_dif6
-  ) %>%
-  pivot_longer(-sexo, names_to = "tipo", values_to = "valor") %>%
-  filter(valor == 1) %>%
-  count(tipo, sexo) %>%
-  ggplot(aes(x = n, y = tipo, fill = sexo)) +
-  geom_col() +
-  scale_fill_manual(values = pal_azules[1:2]) +
-  labs(
-    title = "Tipos de dificultad por sexo",
-    x = "Cantidad de casos",
-    y = "",
-    fill = "Sexo"
-  ) +
-  theme_minimal()
+    habla = dd_tipo_dif4,
+    cognitiva = dd_tipo_dif5,
+    cuidado = dd_tipo_dif6
+  ) |>
+  pivot_longer(-sexo, names_to = "tipo", values_to = "valor") |>
+  filter(valor == 1) |>
+  count(sexo, tipo)
 
-doc <- add_plot(doc, "Figura A2. Tipos de dificultad por sexo", p_tipo_sexo)
+wb <- wb |>
+  wb_add_worksheet("Tipos_por_sexo") |>
+  wb_add_data(x = tab_tipo_sexo, dims = "A1")
 
-# -----------------------------------------
-# Gráfico 3: Tipo de vivienda
-# -----------------------------------------
+rng <- paste0("A1:C", nrow(tab_tipo_sexo) + 1)
 
-p_vivienda <- base %>%
+ch <- ms_barchart(
+  data  = wb_data(wb, dims = rng),
+  x     = "tipo",
+  y     = "n",
+  group = "sexo"
+) |>
+  chart_labels(
+    title = "Tipos de dificultad según sexo",
+    ylab  = "Cantidad de niños y niñas"
+  )
+
+wb <- wb |>
+  wb_add_mschart(
+    sheet = "Tipos_por_sexo",
+    dims  = "E2:M25",
+    graph = ch
+  )
+
+# =========================
+# 3. Tipo de vivienda
+# =========================
+tab_viv <- base |>
   mutate(
     tipo_vivienda = case_when(
       v2_2 == 1 ~ "Casa",
@@ -420,100 +487,110 @@ p_vivienda <- base %>%
       v2_2 == 9 ~ "Inquilinato / conventillo",
       v2_2 == 10 ~ "Hotel / pensión",
       v2_2 == 5 ~ "No destinada a vivienda",
-      v2_2 == 8 ~ "Otro"
+      v2_2 == 8 ~ "Otro",
+      TRUE ~ NA_character_
     )
-  ) %>%
-  count(tipo_vivienda) %>%
-  ggplot(aes(x = n, y = tipo_vivienda)) +
-  geom_col(fill = pal_azules[1]) +
-  labs(
-    title = "Tipo de vivienda",
-    x = "Cantidad de casos",
-    y = ""
-  ) +
-  theme_minimal()
+  ) |>
+  count(tipo_vivienda)
 
-doc <- add_plot(doc, "Figura A3. Tipo de vivienda", p_vivienda)
+wb <- add_sheet_chart(
+  wb,
+  sheet = "Tipo_vivienda",
+  tab   = tab_viv,
+  x     = "tipo_vivienda",
+  y     = "n",
+  title = "Tipo de vivienda",
+  ylab  = "Cantidad de casos"
+)
 
-# -----------------------------------------
-# Gráfico 4: Distribución territorial
-# -----------------------------------------
-
-p_dominio <- base %>%
+# =========================
+# 4. Localización territorial
+# =========================
+tab_dom <- base |>
   mutate(
-    dominio_rec = case_when(
+    dominio = case_when(
       dominio == 3 ~ "Villa",
-      dominio == 4 ~ "Resto de la ciudad"
+      dominio == 4 ~ "Resto de la ciudad",
+      TRUE ~ NA_character_
     )
-  ) %>%
-  count(dominio_rec) %>%
-  ggplot(aes(x = n, y = dominio_rec)) +
-  geom_col(fill = pal_azules[2]) +
-  labs(
-    title = "Distribución territorial",
-    x = "Cantidad de casos",
-    y = ""
-  ) +
-  theme_minimal()
+  ) |>
+  count(dominio)
 
-doc <- add_plot(doc, "Figura A4. Distribución territorial", p_dominio)
+wb <- add_sheet_chart(
+  wb,
+  sheet = "Dominio",
+  tab   = tab_dom,
+  x     = "dominio",
+  y     = "n",
+  title = "Distribución territorial",
+  ylab  = "Cantidad de casos"
+)
 
-# -----------------------------------------
-# Gráfico 5: Hacinamiento
-# -----------------------------------------
-
-p_hacinamiento <- base %>%
+# =========================
+# 5. Hacinamiento
+# =========================
+tab_hac <- base |>
   mutate(
     hacinamiento = case_when(
       hacinam_2 == 1 ~ "Sin hacinamiento",
       hacinam_2 == 2 ~ "Hacinamiento no crítico",
       hacinam_2 == 3 ~ "Hacinamiento crítico",
-      hacinam_2 == 0 ~ "Sin habitaciones exclusivas"
+      hacinam_2 == 0 ~ "Sin habitaciones exclusivas",
+      TRUE ~ NA_character_
     )
-  ) %>%
-  count(hacinamiento) %>%
-  ggplot(aes(x = n, y = hacinamiento, fill = hacinamiento)) +
-  geom_col() +
-  scale_fill_manual(values = pal_azules[1:4]) +
-  labs(
-    title = "Condiciones de hacinamiento",
-    x = "Cantidad de casos",
-    y = "",
-    fill = ""
-  ) +
-  theme_minimal()
+  ) |>
+  count(hacinamiento)
 
-doc <- add_plot(doc, "Figura A5. Condiciones de hacinamiento", p_hacinamiento)
+wb <- add_sheet_chart(
+  wb,
+  sheet = "Hacinamiento",
+  tab   = tab_hac,
+  x     = "hacinamiento",
+  y     = "n",
+  title = "Condiciones de hacinamiento",
+  ylab  = "Cantidad de casos"
+)
 
-# -----------------------------------------
-# Gráfico 6: CUD por sexo (CLAVE DG)
-# -----------------------------------------
 
-p_cud_sexo <- base %>%
-  filter(dificultad_total == 1) %>%
-  mutate(
-    cud = case_when(
-      certificado == 1 ~ "Con CUD",
-      certificado == 2 ~ "Sin CUD"
-    )
-  ) %>%
-  count(sexo, cud) %>%
-  ggplot(aes(x = sexo, y = n, fill = cud)) +
-  geom_col(position = "dodge") +
-  scale_fill_manual(values = c(pal_azules[1], pal_azules[5])) +
-  labs(
-    title = "Tenencia de CUD según sexo",
-    x = "",
-    y = "Cantidad de casos",
-    fill = ""
-  ) +
-  theme_minimal()
 
-doc <- add_plot(doc, "Figura A6. Tenencia de CUD según sexo", p_cud_sexo)
+# =========================
+# Guardar archivo
+# =========================
+wb_save(
+  wb,
+  file = "Anexo_graficos_editables_EAH2024.xlsx",
+  overwrite = TRUE
+)
 
-# -----------------------------------------
-# Guardar documento
-# -----------------------------------------
+```
 
-print(doc, target = "Anexo_graficos_editables_EAH2024.docx")
+
+```{r}
+library(here)
+# -----------------------------
+# IDs de los archivos en Drive
+# (NO CAMBIAN)
+# -----------------------------
+id_informe <- as_id("15AXxZZa26RphOT1PHXmtaZDq9CnYjOEs")     # reemplazá por tu ID real
+id_anexo   <- as_id("1ZMyYLWEOKplj7wJhncNgtV_h9dTmnl60")     # reemplazá por tu ID real
+
+
+# -----------------------------
+# Rutas locales (resultado del render)
+# -----------------------------
+archivo_informe <- here("quarto_documents/primera_infancia_eah2024.docx")
+archivo_anexo   <- here("Anexo_graficos_editables_EAH2024.xlsx")
+
+# -----------------------------
+# Actualizar en Drive
+# -----------------------------
+drive_update(
+  file  = id_informe,
+  media = archivo_informe
+)
+
+drive_update(
+  file  = id_anexo,
+  media = archivo_anexo
+)
 ```
