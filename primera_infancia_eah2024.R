@@ -1,38 +1,4 @@
----
-title: "Caracterización de la población de 0 a 5 años con discapacidad  
-Ciudad de Buenos Aires – EAH 2024
--- BORRADOR --"
-author: "Marcos May"
-date: "`r Sys.Date()`"
-format:
-  pdf:
-    toc: false
-    number-sections: true
-execute:
-  echo: false
-  warning: false
-  message: false
----
-
-## Introducción
-
-El presente informe describe las características de la población de 0 a 5 años con dificultades o discapacidad en la Ciudad de Buenos Aires, a partir de la Encuesta Anual de Hogares 2024.
-
-Se analizan dimensiones vinculadas al tipo de dificultad, características biológicas y condiciones socioambientales del hogar, incluyendo tipo de vivienda, localización territorial y hacinamiento.
-
-## Consideraciones metodológicas
-
-El análisis se basa en un subconjunto reducido de casos: 28 niños y niñas de 0 a 5 años con dificultades o discapacidad identificados en la muestra de la Encuesta Anual de Hogares 2024.
-
-Debido al tamaño muestral acotado, los resultados deben interpretarse con cautela. En particular:
-
-- No se presentan estimaciones en porcentaje, ya que pequeñas variaciones en el número de casos pueden generar cambios significativos en las proporciones.
-- No se aplica el factor de expansión muestral, dado que su utilización sobre un número tan reducido de observaciones puede producir estimaciones altamente inestables y poco confiables.
-- El análisis se mantiene en un nivel descriptivo, orientado a explorar patrones y características generales, sin pretensión de inferencia poblacional.
-
-En este sentido, los resultados deben leerse como una aproximación exploratoria que permite identificar tendencias y posibles desigualdades, más que como estimaciones representativas del total de la población.
-
-```{r}
+## -----------------------------------------------------------------------------------------
 library(tidyverse)
 library(survey)
 library(srvyr)
@@ -66,22 +32,17 @@ base0 <- base0 %>%
   base <- base0 %>%
   filter(edad < 6) %>%
   filter(entrea_md == 1)
-```
 
-```{r}
-base |>
-  count(edad, sexo) |>
-  arrange(edad, sexo) |>
-  kable()
 
-```{r}
+## -----------------------------------------------------------------------------------------
+base |> count(edad) |> kable()
+
+
+## -----------------------------------------------------------------------------------------
 base |> count(sexo) |> kable()
-```
-## Tipo de dificultad
 
-A continuación se presenta la distribución de los distintos tipos de dificultad en la población analizada, así como su desagregación por sexo.
 
-```{r}
+## -----------------------------------------------------------------------------------------
 base %>%
   select(
     sexo,
@@ -114,13 +75,9 @@ base %>%
   scale_fill_brewer(palette = "Set2") +
   theme_minimal()
 
-```
 
-## Condiciones de la vivienda
 
-Se analiza el tipo de vivienda en el que residen los niños y niñas, como indicador de las condiciones habitacionales.
-
-```{r}
+## -----------------------------------------------------------------------------------------
 base %>%
   mutate(
     tipo_vivienda = case_when(
@@ -187,13 +144,9 @@ base %>%
   scale_fill_brewer(palette = "Paired") +
   theme_minimal()
 
-```
 
-## Localización territorial
 
-Se presenta la distribución de la población según dominio, distinguiendo entre viviendas ubicadas en villas y en el resto de la ciudad.
-
-```{r}
+## -----------------------------------------------------------------------------------------
 base %>%
   mutate(
     dominio_rec = case_when(
@@ -213,14 +166,9 @@ base %>%
   ) +
   scale_fill_brewer(palette = "Accent") +
   theme_minimal()
-```
 
 
-## Condiciones de hacinamiento
-
-Se describen las condiciones de hacinamiento en los hogares, como indicador clave de las condiciones socioambientales.
-
-```{r}
+## -----------------------------------------------------------------------------------------
 base %>%
   mutate(
     hacinamiento = case_when(
@@ -242,14 +190,9 @@ base %>%
   ) +
   scale_fill_brewer(palette = "Pastel2") +
   theme_minimal()
-```
 
 
-## Condiciones socioambientales
-
-Finalmente, se analizan las relaciones entre tipo de vivienda, localización territorial y condiciones de hacinamiento.
-
-```{r}
+## -----------------------------------------------------------------------------------------
 base %>%
   mutate(
     dominio_rec = case_when(
@@ -302,5 +245,4 @@ base %>%
   ) +
   scale_fill_brewer(palette = "Set3") +
   theme_minimal()
-```
 
