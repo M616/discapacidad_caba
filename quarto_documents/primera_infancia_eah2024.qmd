@@ -1,11 +1,9 @@
 ---
-title: "Caracterización de la población de 0 a 5 años con discapacidad  
-Ciudad de Buenos Aires – EAH 2024
--- BORRADOR --"
+title: "Caracterización de la población de 0 a 5 años con discapacidad"  
 author: "Marcos May"
 date: "`r Sys.Date()`"
 format:
-  pdf:
+  docx:
     toc: false
     number-sections: true
 execute:
@@ -19,6 +17,8 @@ execute:
 El presente informe describe las características de la población de 0 a 5 años con dificultades o discapacidad en la Ciudad de Buenos Aires, a partir de la Encuesta Anual de Hogares 2024.
 
 Se analizan dimensiones vinculadas al tipo de dificultad, características biológicas y condiciones socioambientales del hogar, incluyendo tipo de vivienda, localización territorial y hacinamiento.
+
+Los gráficos se presentan en formato editable para su adaptación a piezas institucionales.
 
 ## Consideraciones metodológicas
 
@@ -38,6 +38,8 @@ library(survey)
 library(srvyr)
 library(ggthemes)
 library(kableExtra)
+library(officer)
+library(rvg)
 
 options(scipen = 999)
 
@@ -50,8 +52,8 @@ unzip(zipfile = temp_zip, exdir = temp_dir)
 
 archivos_descomprimidos <- list.files(temp_dir, full.names = TRUE)
 
-base0 <- read_delim("/tmp/Rtmp45OxJz/eah2024_bu_ampliada_ind.txt", delim = ';')
-hogares <- read_delim("/tmp/Rtmp45OxJz/eah2024_bu_ampliada_hog.txt", delim = ';')
+base0 <- read_delim(archivos_descomprimidos[5], delim = ';')
+hogares <- read_delim(archivos_descomprimidos[3], delim = ';')
 
 vivienda <- hogares %>%
   select(id, v2_2, v4, hacinam_2) %>%
@@ -66,6 +68,14 @@ base0 <- base0 %>%
   base <- base0 %>%
   filter(edad < 6) %>%
   filter(entrea_md == 1)
+
+pal_azules <- c(
+  "#153244",  # azul oscuro
+  "#2F5C79",
+  "#4A7F9E",
+  "#6FAEC4",
+  "#8DE2D6"   # azul claro / turquesa
+)
 ```
 
 ```{r}
@@ -73,10 +83,12 @@ base |>
   count(edad, sexo) |>
   arrange(edad, sexo) |>
   kable()
+```
 
 ```{r}
 base |> count(sexo) |> kable()
 ```
+
 ## Tipo de dificultad
 
 A continuación se presenta la distribución de los distintos tipos de dificultad en la población analizada, así como su desagregación por sexo.
@@ -111,7 +123,7 @@ base %>%
     y = "",
     fill = "Sexo"
   ) +
-  scale_fill_brewer(palette = "Set2") +
+  scale_fill_manual(values = pal_azules)+
   theme_minimal()
 
 ```
@@ -136,14 +148,18 @@ base %>%
   count(tipo_vivienda) %>%
   mutate(tipo_vivienda = reorder(tipo_vivienda, n)) %>%
   ggplot(aes(x = n, y = tipo_vivienda, fill = tipo_vivienda)) +
-  geom_col(show.legend = FALSE) +
+  geom_col(show.legend = FALSE, fill = "#153244") +
   labs(
     title = "Distribución del tipo de vivienda",
     x = "Cantidad de casos",
     y = ""
   ) +
-  scale_fill_brewer(palette = "Pastel1") +
+  #scale_fill_brewer(palette = "Pastel1") +
   theme_minimal()
+
+```
+
+```{r}
 base %>%
   mutate(
     tipo_vivienda = case_when(
@@ -184,11 +200,11 @@ base %>%
     y = "",
     fill = "Tipo de vivienda"
   ) +
-  scale_fill_brewer(palette = "Paired") +
+  scale_fill_manual(
+  values = pal_azules)+
   theme_minimal()
 
 ```
-
 ## Localización territorial
 
 Se presenta la distribución de la población según dominio, distinguiendo entre viviendas ubicadas en villas y en el resto de la ciudad.
@@ -204,14 +220,13 @@ base %>%
   ) %>%
   count(dominio_rec) %>%
   mutate(dominio_rec = reorder(dominio_rec, n)) %>%
-  ggplot(aes(x = n, y = dominio_rec, fill = dominio_rec)) +
-  geom_col(show.legend = FALSE) +
+  ggplot(aes(x = n, y = dominio_rec)) +
+  geom_col(fill = "#153244") +
   labs(
     title = "Distribución territorial",
     x = "Cantidad de casos",
     y = ""
   ) +
-  scale_fill_brewer(palette = "Accent") +
   theme_minimal()
 ```
 
@@ -240,7 +255,14 @@ base %>%
     x = "Cantidad de casos",
     y = ""
   ) +
-  scale_fill_brewer(palette = "Pastel2") +
+  scale_fill_manual(
+  values = c(
+    "Sin hacinamiento" = "#153244",
+    "Hacinamiento no critico" = "#5FAFB0",
+    "Hacinamiento critico" = "#8DE2D6",
+    "Sin habitaciones de uso exclusivo" = "#2F5C69"
+  )
+)+
   theme_minimal()
 ```
 
@@ -274,8 +296,18 @@ base %>%
     y = "Cantidad de casos",
     fill = "Hacinamiento"
   ) +
-  scale_fill_brewer(palette = "Set3") +
+  scale_fill_manual(
+  values = c(
+    "Sin" = "#153244",
+    "Moderado" = "#5FAFB0",
+    "Critico" = "#8DE2D6"
+  )
+) +
   theme_minimal()
+
+```
+
+```{r}
 base %>%
   mutate(
     tipo_vivienda = case_when(
@@ -300,7 +332,188 @@ base %>%
     y = "Cantidad de casos",
     fill = "Hacinamiento"
   ) +
-  scale_fill_brewer(palette = "Set3") +
+  scale_fill_manual(
+  values = c(
+    "Sin" = "#153244",
+    "Moderado" = "#5FAFB0",
+    "Critico" = "#8DE2D6"
+  )
+) +
   theme_minimal()
 ```
 
+```{r}
+# ================================
+# ANEXO – GRÁFICOS EDITABLES (WORD)
+# ================================
+
+library(officer)
+library(rvg)
+
+# Crear documento Word
+doc <- read_docx()
+
+# Función auxiliar para agregar gráfico editable
+add_plot <- function(doc, titulo, plot){
+  doc %>%
+    body_add_par(titulo, style = "heading 2") %>%
+    body_add_dml(ggobj = plot) %>%
+    body_add_par("")
+}
+# -------------------------------
+# Gráfico 1: Distribución por sexo
+# -------------------------------
+
+p_sexo <- base %>%
+  count(sexo) %>%
+  ggplot(aes(x = sexo, y = n, fill = sexo)) +
+  geom_col() +
+  scale_fill_manual(values = pal_azules[1:2]) +
+  labs(
+    title = "Distribución por sexo",
+    x = "",
+    y = "Cantidad de casos"
+  ) +
+  theme_minimal()
+
+doc <- add_plot(doc, "Figura A1. Distribución por sexo", p_sexo)
+
+# -----------------------------------------
+# Gráfico 2: Tipos de dificultad por sexo
+# -----------------------------------------
+
+p_tipo_sexo <- base %>%
+  select(
+    sexo,
+    motora = dd_tipo_dif1,
+    visual = dd_tipo_dif2,
+    auditiva = dd_tipo_dif3,
+    habla_comunicacion = dd_tipo_dif4,
+    mental_cognitiva = dd_tipo_dif5,
+    cuidado_si = dd_tipo_dif6
+  ) %>%
+  pivot_longer(-sexo, names_to = "tipo", values_to = "valor") %>%
+  filter(valor == 1) %>%
+  count(tipo, sexo) %>%
+  ggplot(aes(x = n, y = tipo, fill = sexo)) +
+  geom_col() +
+  scale_fill_manual(values = pal_azules[1:2]) +
+  labs(
+    title = "Tipos de dificultad por sexo",
+    x = "Cantidad de casos",
+    y = "",
+    fill = "Sexo"
+  ) +
+  theme_minimal()
+
+doc <- add_plot(doc, "Figura A2. Tipos de dificultad por sexo", p_tipo_sexo)
+
+# -----------------------------------------
+# Gráfico 3: Tipo de vivienda
+# -----------------------------------------
+
+p_vivienda <- base %>%
+  mutate(
+    tipo_vivienda = case_when(
+      v2_2 == 1 ~ "Casa",
+      v2_2 == 2 ~ "Departamento",
+      v2_2 == 9 ~ "Inquilinato / conventillo",
+      v2_2 == 10 ~ "Hotel / pensión",
+      v2_2 == 5 ~ "No destinada a vivienda",
+      v2_2 == 8 ~ "Otro"
+    )
+  ) %>%
+  count(tipo_vivienda) %>%
+  ggplot(aes(x = n, y = tipo_vivienda)) +
+  geom_col(fill = pal_azules[1]) +
+  labs(
+    title = "Tipo de vivienda",
+    x = "Cantidad de casos",
+    y = ""
+  ) +
+  theme_minimal()
+
+doc <- add_plot(doc, "Figura A3. Tipo de vivienda", p_vivienda)
+
+# -----------------------------------------
+# Gráfico 4: Distribución territorial
+# -----------------------------------------
+
+p_dominio <- base %>%
+  mutate(
+    dominio_rec = case_when(
+      dominio == 3 ~ "Villa",
+      dominio == 4 ~ "Resto de la ciudad"
+    )
+  ) %>%
+  count(dominio_rec) %>%
+  ggplot(aes(x = n, y = dominio_rec)) +
+  geom_col(fill = pal_azules[2]) +
+  labs(
+    title = "Distribución territorial",
+    x = "Cantidad de casos",
+    y = ""
+  ) +
+  theme_minimal()
+
+doc <- add_plot(doc, "Figura A4. Distribución territorial", p_dominio)
+
+# -----------------------------------------
+# Gráfico 5: Hacinamiento
+# -----------------------------------------
+
+p_hacinamiento <- base %>%
+  mutate(
+    hacinamiento = case_when(
+      hacinam_2 == 1 ~ "Sin hacinamiento",
+      hacinam_2 == 2 ~ "Hacinamiento no crítico",
+      hacinam_2 == 3 ~ "Hacinamiento crítico",
+      hacinam_2 == 0 ~ "Sin habitaciones exclusivas"
+    )
+  ) %>%
+  count(hacinamiento) %>%
+  ggplot(aes(x = n, y = hacinamiento, fill = hacinamiento)) +
+  geom_col() +
+  scale_fill_manual(values = pal_azules[1:4]) +
+  labs(
+    title = "Condiciones de hacinamiento",
+    x = "Cantidad de casos",
+    y = "",
+    fill = ""
+  ) +
+  theme_minimal()
+
+doc <- add_plot(doc, "Figura A5. Condiciones de hacinamiento", p_hacinamiento)
+
+# -----------------------------------------
+# Gráfico 6: CUD por sexo (CLAVE DG)
+# -----------------------------------------
+
+p_cud_sexo <- base %>%
+  filter(dificultad_total == 1) %>%
+  mutate(
+    cud = case_when(
+      certificado == 1 ~ "Con CUD",
+      certificado == 2 ~ "Sin CUD"
+    )
+  ) %>%
+  count(sexo, cud) %>%
+  ggplot(aes(x = sexo, y = n, fill = cud)) +
+  geom_col(position = "dodge") +
+  scale_fill_manual(values = c(pal_azules[1], pal_azules[5])) +
+  labs(
+    title = "Tenencia de CUD según sexo",
+    x = "",
+    y = "Cantidad de casos",
+    fill = ""
+  ) +
+  theme_minimal()
+
+doc <- add_plot(doc, "Figura A6. Tenencia de CUD según sexo", p_cud_sexo)
+
+# -----------------------------------------
+# Guardar documento
+# -----------------------------------------
+
+print(doc, target = "Anexo_graficos_editables_EAH2024.docx")
+```
