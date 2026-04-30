@@ -15,6 +15,10 @@ execute:
 ## Introducción
 
 El presente informe describe las características de la población de 0 a 5 años con dificultades o discapacidad en la Ciudad de Buenos Aires, a partir de la Encuesta Anual de Hogares 2024.
+^[
+Instituto de Estadística y Censos de la Ciudad Autónoma de Buenos Aires (IDECBA). *Encuesta Anual de Hogares de la Ciudad de Buenos Aires (EAH 2024)*.
+https://www.estadisticaciudad.gob.ar/eyc/bases-usuarios/?operativo=114304]
+
 
 Se analizan dimensiones vinculadas al tipo de dificultad, características biológicas y condiciones socioambientales del hogar, incluyendo tipo de vivienda, localización territorial y hacinamiento.
 
