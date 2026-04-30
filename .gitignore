@@ -27,3 +27,10 @@ data/georef/base2_georef.gpkg
 renv/.gitignore
 renv/activate.R
 renv/settings.json
+data/Anonimizado CUD_vigentesCABA2026. 4 de MARZO(CABA).csv
+data/clave Hortalez@2026 - CUD_vigentes_Juntas_CABA_2026_01 Anonimizado.xlsx
+data/georef/andis_marzo_georef.gpkg
+data/georef/cud_enero_respuestas_max1.Rda
+app_puntos_domicilios/rsconnect/shinyapps.io/marcosmay/domicilios.dcf
+data/georef/cud_enero26_resultados_largos_max1.Rda
+data/georef/cud_marzo_respuestas_max1.Rda

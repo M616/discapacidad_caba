@@ -18,7 +18,7 @@ unzip(zipfile = temp_zip, exdir = 'data/enppd')
 
 #archivos_descomprimidos <- list.files('data/enppd', pattern = "\\.csv$", full.names = TRUE)
 base <- read.csv('data/enppd/base_estudio_discapacidad_2018.csv',
-                 sep =';')
+sep =';')
 
 
 #cargo base pesos replicados
@@ -43,6 +43,16 @@ base <-
   merge(base,
         replicas)
 
+###genero la variable de certificado binaria
+base <- base %>%
+  mutate(
+    certificado_bin = case_when(
+      certificado == 1 ~ 1,
+      certificado == 2 ~ 0,
+      TRUE ~ NA_real_
+    )
+  )
+
 disenio <- 
   svrepdesign(data=base,
               weights=~pondera,
@@ -63,6 +73,27 @@ svymean(~dificultad_6ymas,
         subset(disenio, !is.na(dificultad_6ymas)))
 
 #0.10178
+
+##personas de 0 a 5 años con alguna dificultad(para primera infancia, paper de Leila)
+svymean(~dificultad_total,
+        subset(disenio, edad_agrupada == 1))
+
+##personas de 0 a 5 años con alguna dificultad con certificado(para primera infancia, paper de Leila)
+svymean(
+  ~certificado_bin,
+  subset(
+    disenio,
+    edad_agrupada == 1 &
+    dificultad_total == 1 &
+    !is.na(certificado_bin)
+  ),
+  vartype = "ci"
+)
+
+
+#“Entre las niñas y niños de 0 a 5 años que presentan al menos una dificultad funcional, el 69,0 % 
+# cuenta con certificado de discapacidad (IC 95 %: 52,3–85,7).”
+
 
 
 ### pregunta dificultades, aca voy a tomar los que tienen mas de 
