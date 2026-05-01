@@ -48,6 +48,8 @@ library(officer)
 library(rvg)
 library(googledrive)
 options(scipen = 999)
+library(openxlsx2)
+library(mschart)
 
 enlace <- 'https://www.estadisticaciudad.gob.ar/eyc/wp-content/uploads/2025/04/eah2024_bu_ampliada.zip'
 temp_dir <- tempdir()
@@ -85,17 +87,115 @@ pal_azules <- c(
 ```
 
 ```{r}
-base |>
+tabla_edad_sexo <- base |>
   count(edad, sexo) |>
-  arrange(edad, sexo) |>
-  kable()
+  mutate(sexo = factor(sexo, levels = c("Varon", "Mujer"))) |>
+  tidyr::complete(edad, sexo, fill = list(n = 0)) |>
+  pivot_wider(
+    names_from = sexo,
+    values_from = n,
+    values_fill = 0
+  ) |>
+  mutate(
+    Total = Varon + Mujer,
+    edad = as.character(edad)
+  )
+
+# Fila total
+tabla_edad_sexo <- tabla_edad_sexo |>
+  bind_rows(
+    summarise(
+      tabla_edad_sexo,
+      edad = "Total",
+      Varon = sum(Varon),
+      Mujer = sum(Mujer),
+      Total = sum(Total)
+    )
+  )
 ```
 
 ```{r}
-base |> count(sexo) |> kable()
+library(flextable)
+
+tabla_sexo <- base |>
+  count(sexo)
+
+tabla_ft <- flextable(tabla_sexo) |>
+  
+  # 👇 Título
+  set_caption(
+    caption = "Niños y niñas de 0 a 5 años con al menos una dificultad funcional según sexo"
+  ) |>
+  
+  # 👇 Nombres de columnas
+  set_header_labels(
+    sexo = "Sexo",
+    n = "Cantidad"
+  ) |>
+  
+  # 👇 Estilo institucional
+  theme_booktabs() |>
+  bg(part = "header", bg = "#153244") |>
+  color(part = "header", color = "white") |>
+  bold(part = "header") |>
+  
+  # 👇 Centrado
+  align(align = "center", part = "all") |>
+  
+  # 👇 Tamaño + padding
+  fontsize(size = 11, part = "all") |>
+  padding(padding = 4, part = "all") |>
+  
+  # 👇 Ajuste columnas
+  autofit()
+
+tabla_ft   # 👈 importante para que aparezca en Word```
 ```
 
 ```{r}
+tabla_ft <- 
+
+flextable(tabla_edad_sexo) |>
+  
+  # 👇 Título (caption)
+  set_caption(
+    caption = "Niños y niñas de 0 a 5 años con al menos una dificultad funcional según edad y sexo"
+  ) |>
+  
+  # 👇 Labels de columnas (más prolijos)
+  set_header_labels(
+    edad = "Edad",
+    Varon = "Varones",
+    Mujer = "Mujeres",
+    Total = "Total"
+  ) |>
+  
+  # 👇 Estilo general
+  theme_booktabs() |>
+  
+  # 👇 Encabezado azul institucional
+  bg(part = "header", bg = "#153244") |>
+  color(part = "header", color = "white") |>
+  bold(part = "header") |>
+  
+  # 👇 Fila total en negrita
+  bold(i = nrow(tabla_edad_sexo), part = "body") |>
+  
+  # 👇 Centrado
+  align(align = "center", part = "all") |>
+  
+  # 👇 Ajuste automático
+  autofit()
+
+tabla_ft
+
+```
+
+
+
+
+```{r}
+
 
 tabla_cud <- base |>
   count(sexo, d2a) |>
@@ -112,11 +212,59 @@ tabla_cud <- base |>
     values_fill = 0
   )
 
-knitr::kable(
-  tabla_cud,
-  caption = "Niños y niñas de 0 a 5 años con dificultad según tenencia de certificado",
-  col.names = c("Sexo", "Sin certificado", "Con certificado")
-)
+# Agregar total por fila
+tabla_cud <- tabla_cud |>
+  mutate(
+    Total = `Sin certificado` + `Con certificado`
+  )
+
+# Fila total
+tabla_cud <- tabla_cud |>
+  bind_rows(
+    summarise(
+      tabla_cud,
+      sexo = "Total",
+      `Sin certificado` = sum(`Sin certificado`),
+      `Con certificado` = sum(`Con certificado`),
+      Total = sum(Total)
+    )
+  )
+
+# Flextable
+flextable(tabla_cud) |>
+  
+  # 👇 Título
+  set_caption(
+    caption = "Niños y niñas de 0 a 5 años con al menos una dificultad funcional según tenencia de certificado de discapacidad"
+  ) |>
+  
+  # 👇 Encabezados claros
+  set_header_labels(
+    sexo = "Sexo",
+    `Sin certificado` = "Sin certificado",
+    `Con certificado` = "Con certificado",
+    Total = "Total"
+  ) |>
+  
+  # 👇 Estilo institucional
+  theme_booktabs() |>
+  bg(part = "header", bg = "#153244") |>
+  color(part = "header", color = "white") |>
+  bold(part = "header") |>
+  
+  # 👇 Fila total destacada
+  bold(i = nrow(tabla_cud), part = "body") |>
+  
+  # 👇 Centrado general
+  align(align = "center", part = "all") |>
+  
+  # 👇 Tamaño y espaciado
+  fontsize(size = 11, part = "all") |>
+  padding(padding = 4, part = "all") |>
+  
+  # 👇 Ajuste automático
+  autofit()
+
 ```
 
 
@@ -124,6 +272,71 @@ knitr::kable(
 ## Tipo de dificultad
 
 A continuación se presenta la distribución de los distintos tipos de dificultad en la población analizada, así como su desagregación por sexo.
+
+```{r}
+tabla_tipos <- base %>%
+  select(
+    sexo,
+    motora = dd_tipo_dif1,
+    visual = dd_tipo_dif2,
+    auditiva = dd_tipo_dif3,
+    habla_comunicacion = dd_tipo_dif4,
+    mental_cognitiva = dd_tipo_dif5,
+    cuidado_si = dd_tipo_dif6
+  ) %>%
+  pivot_longer(
+    cols = -sexo,
+    names_to = "tipo",
+    values_to = "valor"
+  ) %>%
+  filter(valor == 1) %>%
+  count(tipo, sexo) %>%
+  mutate(sexo = factor(sexo, levels = c("Varon", "Mujer"))) %>%
+  tidyr::complete(tipo, sexo, fill = list(n = 0)) %>%
+  pivot_wider(
+    names_from = sexo,
+    values_from = n,
+    values_fill = 0
+  ) %>%
+  mutate(
+    Total = Varon + Mujer
+  )
+
+
+tabla_tipos_ft <- 
+  flextable(tabla_tipos) |>
+  # Título
+  set_caption(
+    caption = "Niños y niñas de 0 a 5 años con al menos una dificultad funcional según tipo y sexo"
+  ) |>
+
+  # Encabezados
+  set_header_labels(
+    tipo = "Tipo de dificultad",
+    Varon = "Varones",
+    Mujer = "Mujeres",
+    Total = "Total"
+  ) |>
+
+  # Estilo institucional
+  theme_booktabs() |>
+  bg(part = "header", bg = "#153244") |>
+  color(part = "header", color = "white") |>
+  bold(part = "header") |>
+
+  # Alineación
+  align(align = "center", part = "all") |>
+  align(j = 1, align = "left", part = "all") |>
+
+  # Tamaño y espaciado
+  fontsize(size = 11, part = "all") |>
+  padding(padding = 4, part = "all") |>
+
+  # Ajuste automático
+  autofit()
+tabla_tipos_ft
+
+```
 
 ```{r}
 base %>%
@@ -160,9 +373,65 @@ base %>%
 
 ```
 
+
 ## Condiciones de la vivienda
 
 Se analiza el tipo de vivienda en el que residen los niños y niñas, como indicador de las condiciones habitacionales.
+
+
+```{r}
+
+
+
+tabla_vivienda <- base %>%
+  mutate(
+    tipo_vivienda = case_when(
+      v2_2 == 1 ~ "Casa",
+      v2_2 == 2 ~ "Departamento",
+      v2_2 == 9 ~ "Inquilinato / conventillo",
+      v2_2 == 10 ~ "Hotel / pensión",
+      v2_2 == 5 ~ "No destinada a vivienda",
+      v2_2 == 8 ~ "Otro",
+      TRUE ~ NA_character_
+    )
+  ) %>%
+  filter(!is.na(tipo_vivienda)) %>%
+  count(tipo_vivienda) %>%
+  arrange(desc(n))
+
+# Agregar total
+tabla_vivienda <- tabla_vivienda %>%
+  mutate(tipo_vivienda = as.character(tipo_vivienda)) %>%
+  bind_rows(
+    summarise(
+      .,
+      tipo_vivienda = "Total",
+      n = sum(n)
+    )
+  )
+
+# Flextable
+tabla_v_ft <- flextable(tabla_vivienda) |>
+  set_caption(
+    caption = "Niños y niñas de 0 a 5 años con al menos una dificultad funcional según tipo de vivienda"
+  ) |>
+  set_header_labels(
+    tipo_vivienda = "Tipo de vivienda",
+    n = "Cantidad"
+  ) |>
+  theme_booktabs() |>
+  bg(part = "header", bg = "#153244") |>
+  color(part = "header", color = "white") |>
+  bold(part = "header") |>
+  bold(i = nrow(tabla_vivienda), part = "body") |>
+  align(align = "center", part = "all") |>
+  align(j = 1, align = "left", part = "all") |>
+  fontsize(size = 11, part = "all") |>
+  padding(padding = 4, part = "all") |>
+  autofit()
+
+tabla_v_ft
+```
 
 ```{r}
 base %>%
@@ -242,6 +511,54 @@ base %>%
 Se presenta la distribución de la población según dominio, distinguiendo entre viviendas ubicadas en villas y en el resto de la ciudad.
 
 ```{r}
+
+# Construcción de la tabla
+tabla_dominio <- base %>%
+  mutate(
+    dominio_rec = case_when(
+      dominio == 3 ~ "Villa",
+      dominio == 4 ~ "Resto de la ciudad",
+      TRUE ~ NA_character_
+    )
+  ) %>%
+  filter(!is.na(dominio_rec)) %>%
+  count(dominio_rec) %>%
+  arrange(desc(n)) %>%
+  mutate(dominio_rec = as.character(dominio_rec)) %>%
+  bind_rows(
+    summarise(
+      .,
+      dominio_rec = "Total",
+      n = sum(n)
+    )
+  )
+
+# Flextable (se guarda en objeto)
+tabla_dom_ft <- flextable(tabla_dominio) |>
+  set_caption(
+    caption = "Niños y niñas de 0 a 5 años con al menos una dificultad funcional según localización territorial"
+  ) |>
+  set_header_labels(
+    dominio_rec = "Dominio",
+    n = "Cantidad"
+  ) |>
+  theme_booktabs() |>
+  bg(part = "header", bg = "#153244") |>
+  color(part = "header", color = "white") |>
+  bold(part = "header") |>
+  bold(i = nrow(tabla_dominio), part = "body") |>
+  align(align = "center", part = "all") |>
+  align(j = 1, align = "left", part = "all") |>
+  fontsize(size = 11, part = "all") |>
+  padding(padding = 4, part = "all") |>
+  autofit()
+
+# 👇 IMPORTANTE: esto hace que se renderice en el docx
+tabla_dom_ft
+
+```
+
+```{r}
 base %>%
   mutate(
     dominio_rec = case_when(
@@ -266,6 +583,48 @@ base %>%
 ## Condiciones de hacinamiento
 
 Se describen las condiciones de hacinamiento en los hogares, como indicador clave de las condiciones socioambientales.
+
+```{r}
+
+
+
+tabla_hacinamiento <- base %>%
+  mutate(
+    hacinamiento = case_when(
+      hacinam_2 == 1 ~ "Sin hacinamiento",
+      hacinam_2 == 2 ~ "Hacinamiento no crítico",
+      hacinam_2 == 3 ~ "Hacinamiento crítico",
+      hacinam_2 == 0 ~ "Sin habitaciones de uso exclusivo",
+      TRUE ~ NA_character_
+    )
+  ) %>%
+  filter(!is.na(hacinamiento)) %>%
+  count(hacinamiento) %>%
+  arrange(desc(n)) %>%
+  mutate(hacinamiento = as.character(hacinamiento)) %>%
+  bind_rows(
+    summarise(
+      .,
+      hacinamiento = "Total",
+      n = sum(n)
+    )
+  )
+
+tabla_hac_ft <- flextable(tabla_hacinamiento) |>
+  set_caption("Niños y niñas de 0 a 5 años con al menos una dificultad funcional según condiciones de hacinamiento") |>
+  set_header_labels(hacinamiento = "Condición", n = "Cantidad") |>
+  theme_booktabs() |>
+  bg(part = "header", bg = "#153244") |>
+  color(part = "header", color = "white") |>
+  bold(part = "header") |>
+  bold(i = nrow(tabla_hacinamiento), part = "body") |>
+  align(align = "center", part = "all") |>
+  align(j = 1, align = "left", part = "all") |>
+  autofit()
+
+tabla_hac_ft
+
+```
 
 ```{r}
 base %>%
@@ -302,6 +661,65 @@ base %>%
 ## Condiciones socioambientales
 
 Finalmente, se analizan las relaciones entre tipo de vivienda, localización territorial y condiciones de hacinamiento.
+
+```{r}
+tabla_dom_hac <- base %>%
+  mutate(
+    dominio_rec = case_when(
+      dominio == 3 ~ "Villa",
+      dominio == 4 ~ "Resto de la ciudad",
+      TRUE ~ NA_character_
+    ),
+    hacinamiento = case_when(
+      hacinam_2 == 1 ~ "Sin",
+      hacinam_2 == 2 ~ "Moderado",
+      hacinam_2 == 3 ~ "Crítico",
+      TRUE ~ NA_character_
+    )
+  ) %>%
+  filter(!is.na(hacinamiento), !is.na(dominio_rec)) %>%
+  count(dominio_rec, hacinamiento) %>%
+  tidyr::pivot_wider(
+    names_from = hacinamiento,
+    values_from = n,
+    values_fill = 0
+  ) %>%
+  mutate(
+    Total = rowSums(across(where(is.numeric))),
+    dominio_rec = as.character(dominio_rec)
+  ) %>%
+  bind_rows(
+    summarise(
+      .,
+      dominio_rec = "Total",
+      Sin = sum(Sin),
+      Moderado = sum(Moderado),
+      Crítico = sum(Crítico),
+      Total = sum(Total)
+    )
+  )
+
+tabla_dom_hac_ft <- flextable(tabla_dom_hac) |>
+  set_caption("Condiciones de hacinamiento según dominio") |>
+  set_header_labels(
+    dominio_rec = "Dominio",
+    Sin = "Sin hacinamiento",
+    Moderado = "Moderado",
+    Crítico = "Crítico",
+    Total = "Total"
+  ) |>
+  theme_booktabs() |>
+  bg(part = "header", bg = "#153244") |>
+  color(part = "header", color = "white") |>
+  bold(part = "header") |>
+  bold(i = nrow(tabla_dom_hac), part = "body") |>
+  align(align = "center", part = "all") |>
+  align(j = 1, align = "left", part = "all") |>
+  autofit()
+
+tabla_dom_hac_ft
+```
+
 
 ```{r}
 base %>%
@@ -374,11 +792,65 @@ base %>%
   theme_minimal()
 ```
 
+```{r}
+tabla_viv_hac <- base %>%
+  mutate(
+    tipo_vivienda = case_when(
+      v2_2 == 1 ~ "Casa",
+      v2_2 == 2 ~ "Departamento",
+      TRUE ~ "Otros"
+    ),
+    hacinamiento = case_when(
+      hacinam_2 == 1 ~ "Sin",
+      hacinam_2 == 2 ~ "Moderado",
+      hacinam_2 == 3 ~ "Crítico",
+      TRUE ~ NA_character_
+    )
+  ) %>%
+  filter(!is.na(hacinamiento)) %>%
+  count(tipo_vivienda, hacinamiento) %>%
+  tidyr::pivot_wider(
+    names_from = hacinamiento,
+    values_from = n,
+    values_fill = 0
+  ) %>%
+  mutate(
+    Total = rowSums(across(where(is.numeric))),
+    tipo_vivienda = as.character(tipo_vivienda)
+  ) %>%
+  bind_rows(
+    summarise(
+      .,
+      tipo_vivienda = "Total",
+      Sin = sum(Sin),
+      Moderado = sum(Moderado),
+      Crítico = sum(Crítico),
+      Total = sum(Total)
+    )
+  )
+
+tabla_viv_hac_ft <- flextable(tabla_viv_hac) |>
+  set_caption("Tipo de vivienda según condiciones de hacinamiento") |>
+  set_header_labels(
+    tipo_vivienda = "Tipo de vivienda",
+    Sin = "Sin hacinamiento",
+    Moderado = "Moderado",
+    Crítico = "Crítico",
+    Total = "Total"
+  ) |>
+  theme_booktabs() |>
+  bg(part = "header", bg = "#153244") |>
+  color(part = "header", color = "white") |>
+  bold(part = "header") |>
+  bold(i = nrow(tabla_viv_hac), part = "body") |>
+  align(align = "center", part = "all") |>
+  align(j = 1, align = "left", part = "all") |>
+  autofit()
+
+tabla_viv_hac_ft
+```
+
 ```{r, eval=FALSE}
-library(openxlsx2)
-library(mschart)
-
-
 # =========================
 # Helper: hoja + gráfico
 # =========================
