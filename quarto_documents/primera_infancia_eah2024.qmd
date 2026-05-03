@@ -854,10 +854,17 @@ tabla_viv_hac_ft
 # =========================
 # Helper: hoja + gráfico
 # =========================
+
+wb <- wb_workbook()
+
 add_sheet_chart <- function(wb, sheet, tab, x, y,
                             title, ylab,
                             chart_dims = "D2:L20") {
 
+ 
+
+ 
+  
   # agregar hoja + datos
   wb <- wb |>
     wb_add_worksheet(sheet) |>
@@ -893,7 +900,7 @@ add_sheet_chart <- function(wb, sheet, tab, x, y,
 # =========================
 # Workbook
 # =========================
-wb <- wb_workbook()
+
 
 # =========================
 # 1. Distribución por sexo
