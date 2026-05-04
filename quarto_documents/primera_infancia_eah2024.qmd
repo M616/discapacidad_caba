@@ -24,7 +24,8 @@ Se analizan dimensiones vinculadas al tipo de dificultad, características biol�
 
 Los gráficos se presentan en formato editable para su adaptación a piezas institucionales.
 
-Entre las niñas y niños de 0 a 5 años que presentan al menos una dificultad funcional, el 69,0 % cuenta con certificado de discapacidad (IC 95 %: 52,3–85,7).
+Entre las niñas y niños de 0 a 5 años que presentan al menos una dificultad funcional, para el total nacional, el 69,0 % cuenta con certificado de discapacidad (IC 95 %: 52,3–85,7)^[Instituto Nacional de Estadística y Censos (INDEC) (2018). *Estudio Nacional sobre el Perfil de las Personas con Discapacidad*. Buenos Aires: INDEC. Disponible en: https://www.indec.gob.ar/indec/web/Institucional-Indec-BasesDeDatos-7.]
+
 
 ## Consideraciones metodológicas
 
@@ -195,8 +196,6 @@ tabla_ft
 
 
 ```{r}
-
-
 tabla_cud <- base |>
   count(sexo, d2a) |>
   mutate(
@@ -289,6 +288,16 @@ tabla_tipos <- base %>%
     names_to = "tipo",
     values_to = "valor"
   ) %>%
+  mutate(
+    tipo = recode(tipo,
+      motora = "Motora",
+      visual = "Visual",
+      auditiva = "Auditiva",
+      habla_comunicacion = "Habla y comunicación",
+      mental_cognitiva = "Mental-cognitiva",
+      cuidado_si = "Cuidado de sí"
+    )
+  ) %>%
   filter(valor == 1) %>%
   count(tipo, sexo) %>%
   mutate(sexo = factor(sexo, levels = c("Varon", "Mujer"))) %>%
@@ -305,11 +314,12 @@ tabla_tipos <- base %>%
 
 tabla_tipos_ft <- 
   flextable(tabla_tipos) |>
+  
   # Título
   set_caption(
     caption = "Niños y niñas de 0 a 5 años con al menos una dificultad funcional según tipo y sexo"
   ) |>
-
+  
   # Encabezados
   set_header_labels(
     tipo = "Tipo de dificultad",
@@ -317,31 +327,43 @@ tabla_tipos_ft <-
     Mujer = "Mujeres",
     Total = "Total"
   ) |>
-
+  
   # Estilo institucional
   theme_booktabs() |>
   bg(part = "header", bg = "#153244") |>
   color(part = "header", color = "white") |>
   bold(part = "header") |>
-
+  
   # Alineación
   align(align = "center", part = "all") |>
   align(j = 1, align = "left", part = "all") |>
-
+  
   # Tamaño y espaciado
   fontsize(size = 11, part = "all") |>
   padding(padding = 4, part = "all") |>
-
+  
   # Ajuste automático
   autofit()
+
 tabla_tipos_ft
 
 ```
 
 ```{r}
 base %>%
+  mutate(
+    tipo_vivienda = case_when(
+      v2_2 == 1 ~ "Casa",
+      v2_2 == 2 ~ "Departamento",
+      v2_2 == 9 ~ "Inquilinato / conventillo",
+      v2_2 == 10 ~ "Hotel / pensión",
+      v2_2 == 5 ~ "No destinada a vivienda",
+      v2_2 == 8 ~ "Otro",
+      TRUE ~ NA_character_
+    )
+  ) %>%
   select(
-    sexo,
+    tipo_vivienda,
     motora = dd_tipo_dif1,
     visual = dd_tipo_dif2,
     auditiva = dd_tipo_dif3,
@@ -350,25 +372,37 @@ base %>%
     cuidado_si = dd_tipo_dif6
   ) %>%
   pivot_longer(
-    cols = -sexo,
+    cols = -tipo_vivienda,
     names_to = "tipo",
     values_to = "valor"
   ) %>%
+  mutate(
+    tipo = recode(tipo,
+      motora = "Motora",
+      visual = "Visual",
+      auditiva = "Auditiva",
+      habla_comunicacion = "Habla y comunicación",
+      mental_cognitiva = "Mental-cognitiva",
+      cuidado_si = "Cuidado de sí"
+    )
+  ) %>%
   filter(valor == 1) %>%
-  count(tipo, sexo) %>%
+  count(tipo, tipo_vivienda) %>%
   group_by(tipo) %>%
   mutate(total = sum(n)) %>%
   ungroup() %>%
   mutate(tipo = reorder(tipo, total)) %>%
-  ggplot(aes(x = n, y = tipo, fill = sexo)) +
+  ggplot(aes(x = n, y = tipo, fill = tipo_vivienda)) +
   geom_col() +
   labs(
-    title = "Tipos de dificultad por sexo",
+    title = stringr::str_wrap(
+  "Niños y niñas de 0 a 5 años con al menos una dificultad funcional según tipo y vivienda",
+  width = 60),
     x = "Cantidad de niños/as",
     y = "",
-    fill = "Sexo"
+    fill = "Tipo de vivienda"
   ) +
-  scale_fill_manual(values = pal_azules)+
+  scale_fill_manual(values = pal_azules) +
   theme_minimal()
 
 ```
@@ -380,9 +414,6 @@ Se analiza el tipo de vivienda en el que residen los niños y niñas, como indic
 
 
 ```{r}
-
-
-
 tabla_vivienda <- base %>%
   mutate(
     tipo_vivienda = case_when(
@@ -467,7 +498,7 @@ base %>%
       v2_2 == 1 ~ "Casa",
       v2_2 == 2 ~ "Departamento",
       v2_2 == 9 ~ "Inquilinato / conventillo",
-      v2_2 == 10 ~ "Hotel / pension",
+      v2_2 == 10 ~ "Hotel / pensión",
       v2_2 == 5 ~ "No destinada a vivienda",
       v2_2 == 8 ~ "Otro",
       TRUE ~ NA_character_
@@ -487,6 +518,16 @@ base %>%
     names_to = "tipo",
     values_to = "valor"
   ) %>%
+  mutate(
+    tipo = recode(tipo,
+      motora = "Motora",
+      visual = "Visual",
+      auditiva = "Auditiva",
+      habla_comunicacion = "Habla y comunicación",
+      mental_cognitiva = "Mental-cognitiva",
+      cuidado_si = "Cuidado de sí"
+    )
+  ) %>%
   filter(valor == 1) %>%
   count(tipo, tipo_vivienda) %>%
   group_by(tipo) %>%
@@ -496,14 +537,17 @@ base %>%
   ggplot(aes(x = n, y = tipo, fill = tipo_vivienda)) +
   geom_col() +
   labs(
-    title = "Tipos de dificultad por tipo de vivienda",
+    title = stringr::str_wrap(
+      "Niños y niñas de 0 a 5 años con al menos una dificultad funcional según tipo y vivienda",
+      width = 60
+    ),
     x = "Cantidad de niños/as",
     y = "",
     fill = "Tipo de vivienda"
   ) +
-  scale_fill_manual(
-  values = pal_azules)+
+  scale_fill_manual(values = pal_azules) +
   theme_minimal()
+
 
 ```
 ## Localización territorial
@@ -850,191 +894,225 @@ tabla_viv_hac_ft <- flextable(tabla_viv_hac) |>
 tabla_viv_hac_ft
 ```
 
+
 ```{r, eval=FALSE}
 # =========================
-# Helper: hoja + gráfico
+# Workbook
 # =========================
-
 wb <- wb_workbook()
 
-add_sheet_chart <- function(wb, sheet, tab, x, y,
-                            title, ylab,
-                            chart_dims = "D2:L20") {
-
- 
-
- 
+# =========================
+# Helper: limpiar tabla
+# =========================
+prep_tab <- function(tab, cat_col, categorias = NULL) {
   
-  # agregar hoja + datos
+  tab <- tab |> as.data.frame()
+  
+  # eliminar fila Total
+  if (cat_col %in% names(tab)) {
+    tab <- tab |> filter(.data[[cat_col]] != "Total")
+  }
+  
+  # completar categorías
+  if (!is.null(categorias)) {
+    tab <- tab |> complete(!!sym(cat_col) := categorias)
+  }
+  
+  # reemplazar NA por 0
+  tab[is.na(tab)] <- 0
+  
+  tab
+}
+
+# =========================
+# Helper: hoja + tabla
+# =========================
+add_sheet_data <- function(wb, sheet, title, tab) {
+  
+  wb <- wb |> wb_add_worksheet(sheet)
+  
   wb <- wb |>
-    wb_add_worksheet(sheet) |>
-    wb_add_data(x = tab, dims = "A1")
-
-  # rango automático A1:...
-  n <- nrow(tab) + 1
-  last_col <- LETTERS[ncol(tab)]
-  rng <- paste0("A1:", last_col, n)
-
-  # gráfico Excel
-  ch <- ms_barchart(
-    data = wb_data(wb, dims = rng),
-    x = x,
-    y = y
-  ) |>
-    chart_labels(
-      title = title,
-      ylab  = ylab
-    )
-
-  # insertar gráfico
-  wb <- wb |>
-    wb_add_mschart(
-      sheet = sheet,
-      dims  = chart_dims,
-      graph = ch
-    )
-
+    wb_add_data(sheet = sheet, x = data.frame(Titulo = title), dims = "A1") |>
+    wb_add_data(sheet = sheet, x = tab, dims = "A3")
+  
   wb
 }
 
 # =========================
-# Workbook
+# Helper: hoja + tabla + gráfico
 # =========================
+add_sheet_chart <- function(wb, sheet, tab, x, y, title, ylab, chart_dims = "D6:L25") {
+  
+  wb <- wb |> wb_add_worksheet(sheet)
+  
+  wb <- wb |>
+    wb_add_data(sheet = sheet, x = data.frame(Titulo = title), dims = "A1") |>
+    wb_add_data(sheet = sheet, x = tab, dims = "A3")
+  
+  # gráfico
+  ch <- ms_barchart(
+    data = tab,
+    x = x,
+    y = y
+  ) |>
+    chart_settings(dir = "vertical") |>
+    chart_labels(title = title, ylab = ylab)
+  
+  # control de leyenda
+  if (length(y) == 1) {
+    ch <- ch |> chart_theme(legend_position = "n")
+  } else {
+    ch <- ch |> chart_theme(legend_position = "r")
+  }
+  
+  wb <- wb |>
+    wb_add_mschart(
+      sheet = sheet,
+      dims = chart_dims,
+      graph = ch
+    )
+  
+  wb
+}
 
-
 # =========================
-# 1. Distribución por sexo
+# 1. Sexo
 # =========================
-tab_sexo <- base |> count(sexo)
+tab_sexo <- base |> 
+  count(sexo) |> 
+  prep_tab("sexo")
 
 wb <- add_sheet_chart(
-  wb,
-  sheet = "Sexo",
-  tab   = tab_sexo,
-  x     = "sexo",
-  y     = "n",
-  title = "Distribución por sexo (0–5 años)",
-  ylab  = "Cantidad de casos"
+  wb, "Sexo", tab_sexo,
+  "sexo", "n",
+  "Niños y niñas de 0 a 5 años con al menos una dificultad funcional según sexo",
+  "Cantidad de casos"
 )
 
-# =================================
-# 2. Tipos de dificultad por sexo
-# (barras agrupadas)
-# =================================
-tab_tipo_sexo <- base |>
-  select(
-    sexo,
-    motora = dd_tipo_dif1,
-    visual = dd_tipo_dif2,
-    auditiva = dd_tipo_dif3,
-    habla = dd_tipo_dif4,
-    cognitiva = dd_tipo_dif5,
-    cuidado = dd_tipo_dif6
-  ) |>
-  pivot_longer(-sexo, names_to = "tipo", values_to = "valor") |>
-  filter(valor == 1) |>
-  count(sexo, tipo)
+# =========================
+# 2. Edad y sexo
+# =========================
+wb <- add_sheet_data(
+  wb,
+  "Edad_sexo",
+  "Distribución por edad y sexo",
+  tabla_edad_sexo
+)
+
+# =========================
+# 3. CUD
+# =========================
+wb <- add_sheet_data(
+  wb,
+  "CUD",
+  "Certificado de discapacidad según sexo",
+  tabla_cud
+)
+
+# =========================
+# 4. Tipos de dificultad
+# =========================
+niveles_tipos <- c(
+  "Motora",
+  "Visual",
+  "Auditiva",
+  "Habla y comunicación",
+  "Mental-cognitiva",
+  "Cuidado de sí"
+)
+
+tab_tipos_excel <- tabla_tipos |>
+  prep_tab("tipo", niveles_tipos)
+
+wb <- wb |> wb_add_worksheet("Tipos_dificultad")
 
 wb <- wb |>
-  wb_add_worksheet("Tipos_por_sexo") |>
-  wb_add_data(x = tab_tipo_sexo, dims = "A1")
+  wb_add_data(
+    sheet = "Tipos_dificultad",
+    x = data.frame(Titulo = "Tipos de dificultad según sexo"),
+    dims = "A1"
+  ) |>
+  wb_add_data(
+    sheet = "Tipos_dificultad",
+    x = tab_tipos_excel,
+    dims = "A3"
+  )
 
-rng <- paste0("A1:C", nrow(tab_tipo_sexo) + 1)
+rng <- paste0("A3:D", nrow(tab_tipos_excel) + 2)
 
 ch <- ms_barchart(
-  data  = wb_data(wb, dims = rng),
-  x     = "tipo",
-  y     = "n",
-  group = "sexo"
+  data = wb_data(wb, sheet = "Tipos_dificultad", dims = rng),
+  x = "tipo",
+  y = c("Varon", "Mujer")
 ) |>
+  chart_settings(dir = "vertical") |>
   chart_labels(
     title = "Tipos de dificultad según sexo",
-    ylab  = "Cantidad de niños y niñas"
+    ylab = "Cantidad de casos"
   )
 
 wb <- wb |>
   wb_add_mschart(
-    sheet = "Tipos_por_sexo",
-    dims  = "E2:M25",
+    sheet = "Tipos_dificultad",
+    dims = "F6:O25",
     graph = ch
   )
 
 # =========================
-# 3. Tipo de vivienda
+# 5. Vivienda
 # =========================
-tab_viv <- base |>
-  mutate(
-    tipo_vivienda = case_when(
-      v2_2 == 1 ~ "Casa",
-      v2_2 == 2 ~ "Departamento",
-      v2_2 == 9 ~ "Inquilinato / conventillo",
-      v2_2 == 10 ~ "Hotel / pensión",
-      v2_2 == 5 ~ "No destinada a vivienda",
-      v2_2 == 8 ~ "Otro",
-      TRUE ~ NA_character_
-    )
-  ) |>
-  count(tipo_vivienda)
+tab_viv <- tabla_vivienda |>
+  prep_tab("tipo_vivienda")
 
 wb <- add_sheet_chart(
-  wb,
-  sheet = "Tipo_vivienda",
-  tab   = tab_viv,
-  x     = "tipo_vivienda",
-  y     = "n",
-  title = "Tipo de vivienda",
-  ylab  = "Cantidad de casos"
+  wb, "Vivienda", tab_viv,
+  "tipo_vivienda", "n",
+  "Tipo de vivienda",
+  "Cantidad de casos"
 )
 
 # =========================
-# 4. Localización territorial
+# 6. Dominio
 # =========================
-tab_dom <- base |>
-  mutate(
-    dominio = case_when(
-      dominio == 3 ~ "Villa",
-      dominio == 4 ~ "Resto de la ciudad",
-      TRUE ~ NA_character_
-    )
-  ) |>
-  count(dominio)
+tab_dom <- tabla_dominio |>
+  prep_tab("dominio_rec", c("Villa", "Resto de la ciudad"))
 
 wb <- add_sheet_chart(
-  wb,
-  sheet = "Dominio",
-  tab   = tab_dom,
-  x     = "dominio",
-  y     = "n",
-  title = "Distribución territorial",
-  ylab  = "Cantidad de casos"
+  wb, "Dominio", tab_dom,
+  "dominio_rec", "n",
+  "Distribución territorial",
+  "Cantidad de casos"
 )
 
 # =========================
-# 5. Hacinamiento
+# 7. Hacinamiento
 # =========================
-tab_hac <- base |>
-  mutate(
-    hacinamiento = case_when(
-      hacinam_2 == 1 ~ "Sin hacinamiento",
-      hacinam_2 == 2 ~ "Hacinamiento no crítico",
-      hacinam_2 == 3 ~ "Hacinamiento crítico",
-      hacinam_2 == 0 ~ "Sin habitaciones exclusivas",
-      TRUE ~ NA_character_
-    )
-  ) |>
-  count(hacinamiento)
+tab_hac <- tabla_hacinamiento |>
+  prep_tab("hacinamiento")
 
 wb <- add_sheet_chart(
-  wb,
-  sheet = "Hacinamiento",
-  tab   = tab_hac,
-  x     = "hacinamiento",
-  y     = "n",
-  title = "Condiciones de hacinamiento",
-  ylab  = "Cantidad de casos"
+  wb, "Hacinamiento", tab_hac,
+  "hacinamiento", "n",
+  "Condiciones de hacinamiento",
+  "Cantidad de casos"
 )
 
+# =========================
+# 8. Cruces
+# =========================
+wb <- add_sheet_data(
+  wb,
+  "Dom_Hac",
+  "Hacinamiento según dominio",
+  tabla_dom_hac
+)
 
+wb <- add_sheet_data(
+  wb,
+  "Viv_Hac",
+  "Tipo de vivienda y hacinamiento",
+  tabla_viv_hac
+)
 
 # =========================
 # Guardar archivo
@@ -1044,7 +1122,6 @@ wb_save(
   file = "Anexo_graficos_editables_EAH2024.xlsx",
   overwrite = TRUE
 )
-
 ```
 
 
