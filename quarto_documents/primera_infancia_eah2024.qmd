@@ -350,7 +350,8 @@ tabla_tipos_ft
 ```
 
 ```{r}
-base %>%
+base <- 
+  base %>%
   mutate(
     tipo_vivienda = case_when(
       v2_2 == 1 ~ "Casa",
@@ -361,7 +362,9 @@ base %>%
       v2_2 == 8 ~ "Otro",
       TRUE ~ NA_character_
     )
-  ) %>%
+  ) 
+
+  base |> 
   select(
     tipo_vivienda,
     motora = dd_tipo_dif1,
@@ -895,7 +898,7 @@ tabla_viv_hac_ft
 ```
 
 
-```{r, eval=FALSE}
+```{r, eval=TRUE}
 # =========================
 # Workbook
 # =========================
@@ -1058,6 +1061,84 @@ wb <- wb |>
     graph = ch
   )
 
+```
+
+
+```{r}
+base_dif <- base %>%
+  select(
+    tipo_vivienda,
+    motora              = dd_tipo_dif1,
+    visual              = dd_tipo_dif2,
+    auditiva            = dd_tipo_dif3,
+    habla_comunicacion  = dd_tipo_dif4,
+    mental_cognitiva    = dd_tipo_dif5,
+    cuidado_si          = dd_tipo_dif6
+  )
+
+
+base_dif_long <- base_dif %>%
+  tidyr::pivot_longer(
+    cols = -tipo_vivienda,
+    names_to  = "tipo_dificultad",
+    values_to = "valor"
+  ) %>%
+  filter(valor == 1)   
+
+
+tabla_tipo_viv <- base_dif_long %>%
+  count(tipo_vivienda, tipo_dificultad) %>%
+  tidyr::pivot_wider(
+    names_from  = tipo_dificultad,
+    values_from = n,
+    values_fill = 0
+  )
+
+
+
+tabla_tipo_viv <- tabla_tipo_viv %>%
+  rename(
+    Motora             = motora,
+    Visual             = visual,
+    Auditiva           = auditiva,
+    `Habla y comunicación` = habla_comunicacion,
+    `Mental-cognitiva` = mental_cognitiva,
+    `Cuidado de sí`    = cuidado_si
+  )
+
+wb <- wb |> wb_add_worksheet("TipoViv_TipoDif")
+
+wb <- wb |>
+  wb_add_data(
+    sheet = "TipoViv_TipoDif",
+    x = data.frame(
+      Titulo = "Tipos de dificultad según tipo de vivienda"
+    ),
+    dims = "A1"
+  ) |>
+  wb_add_data(
+    sheet = "TipoViv_TipoDif",
+    x = tabla_tipo_viv,
+    dims = "A3"
+  )
+
+
+
+tabla_tipo_viv_chart <- tabla_tipo_viv |>
+  dplyr::rename(
+    Habla_comunicacion = `Habla y comunicación`,
+    Mental_cognitiva   = `Mental-cognitiva`,
+    Cuidado_de_si      = `Cuidado de sí`
+  ) |>
+  as.data.frame()
+
+```
+
+
+
+
+
+```{r}
 # =========================
 # 5. Vivienda
 # =========================
