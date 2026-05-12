@@ -14,7 +14,7 @@ execute:
 
 ## Introducción
 
-El presente informe describe las características de la población de 0 a 5 años con dificultades o discapacidad en la Ciudad de Buenos Aires, a partir de la Encuesta Anual de Hogares 2024.
+El presente informe describe las características de la población de 0 a 5 años con al menos una dificultad^[Este subuniverso se definió como la población de 0 a 5 años con al menos una dificultad funcional (dd_con_dif == 1). El módulo de discapacidad se aplica a las personas que presentan indicios de dificultad en las preguntas filtro del cuestionario general y/o a quienes poseen certificado de discapacidad vigente o en trámite. Bajo estos criterios, el módulo alcanza a 28 casos en este grupo etario; sin embargo, al considerar la variable de síntesis de dificultades funcionales utilizada en el análisis, el universo efectivo de personas con al menos una dificultad se reduce a 25.] en la Ciudad de Buenos Aires, a partir de la Encuesta Anual de Hogares 2024.
 ^[
 Instituto de Estadística y Censos de la Ciudad Autónoma de Buenos Aires (IDECBA). *Encuesta Anual de Hogares de la Ciudad de Buenos Aires (EAH 2024)*.
 https://www.estadisticaciudad.gob.ar/eyc/bases-usuarios/?operativo=114304]
@@ -29,7 +29,7 @@ Entre las niñas y niños de 0 a 5 años que presentan al menos una dificultad f
 
 ## Consideraciones metodológicas
 
-El análisis se basa en un subconjunto reducido de casos: 28 niños y niñas de 0 a 5 años con dificultades o discapacidad identificados en la muestra de la Encuesta Anual de Hogares 2024.
+El análisis se basa en un subconjunto reducido de casos: 25 niños y niñas de 0 a 5 años con al menos una dificultad identificados en la muestra de la Encuesta Anual de Hogares 2024.
 
 Debido al tamaño muestral acotado, los resultados deben interpretarse con cautela. En particular:
 
@@ -38,6 +38,11 @@ Debido al tamaño muestral acotado, los resultados deben interpretarse con caute
 - El análisis se mantiene en un nivel descriptivo, orientado a explorar patrones y características generales, sin pretensión de inferencia poblacional.
 
 En este sentido, los resultados deben leerse como una aproximación exploratoria que permite identificar tendencias y posibles desigualdades, más que como estimaciones representativas del total de la población.
+
+
+
+
+
 
 ```{r}
 library(tidyverse)
@@ -51,7 +56,40 @@ library(googledrive)
 options(scipen = 999)
 library(openxlsx2)
 library(mschart)
+library(flextable)
+library(here)
+```
 
+```{r, eval=FALSE}
+# -----------------------------
+# IDs de los archivos en Drive
+# (NO CAMBIAN)
+# -----------------------------
+id_informe <- as_id("15AXxZZa26RphOT1PHXmtaZDq9CnYjOEs")     # reemplazá por tu ID real
+id_anexo   <- as_id("1ZMyYLWEOKplj7wJhncNgtV_h9dTmnl60")     # reemplazá por tu ID real
+
+
+# -----------------------------
+# Rutas locales (resultado del render)
+# -----------------------------
+archivo_informe <- here("quarto_documents/primera_infancia_eah2024.docx")
+archivo_anexo   <- here("quarto_documents/anexo_graficos_editables_EAH2024.xlsx")
+
+# -----------------------------
+# Actualizar en Drive
+# -----------------------------
+drive_update(
+  file  = id_informe,
+  media = archivo_informe
+)
+
+drive_update(
+  file  = id_anexo,
+  media = archivo_anexo
+)
+```
+
+```{r}
 enlace <- 'https://www.estadisticaciudad.gob.ar/eyc/wp-content/uploads/2025/04/eah2024_bu_ampliada.zip'
 temp_dir <- tempdir()
 temp_zip <- file.path(temp_dir, "archivo_descargado.zip")
@@ -76,7 +114,8 @@ base0 <- base0 %>%
 
   base <- base0 %>%
   filter(edad < 6) %>%
-  filter(entrea_md == 1)
+  #filter(entrea_md == 1)
+  filter(dd_con_dif == 1)
 
 pal_azules <- c(
   "#153244",  # azul oscuro
@@ -86,6 +125,37 @@ pal_azules <- c(
   "#8DE2D6"   # azul claro / turquesa
 )
 ```
+
+```{r}
+tabla_dificultades_ind <- 
+  base %>%
+  select(Motora               = dd_tipo_dif1,
+    Visual               = dd_tipo_dif2,
+    Auditiva             = dd_tipo_dif3,
+    `Habla y comunicación` = dd_tipo_dif4,
+    `Mental-cognitiva`   = dd_tipo_dif5,
+    `Cuidado de sí`      = dd_tipo_dif6
+  ) 
+
+
+
+tabla_dificultades_ind_ft <- 
+   flextable (tabla_dificultades_ind) |> 
+   bg(part = "header", bg = "#153244") |>
+   color(part = "header", color = "white") |>
+  bold(part = "header") |>  
+  align(align = "center", part = "all") |>  
+  # 👇 Ajuste automático
+  set_caption(
+    caption = "Distribución de las dificultades funcionales en la población de 0 a 5 años (registro individual)"
+  ) |>
+    autofit()
+
+#tabla_dificultades_ind_ft
+
+```
+
+
 
 ```{r}
 tabla_edad_sexo <- base |>
@@ -116,8 +186,6 @@ tabla_edad_sexo <- tabla_edad_sexo |>
 ```
 
 ```{r}
-library(flextable)
-
 tabla_sexo <- base |>
   count(sexo)
 
@@ -1061,6 +1129,14 @@ wb <- wb |>
     graph = ch
   )
 
+  wb <- add_sheet_data(
+  wb,
+  sheet = "Dificultades_ind",
+  title = "Tipo de dificultad funcional por persona (0 a 5 años)",
+  tab   = tabla_dificultades_ind
+)
+
+
 ```
 
 
@@ -1200,38 +1276,9 @@ wb <- add_sheet_data(
 # =========================
 wb_save(
   wb,
-  file = "Anexo_graficos_editables_EAH2024.xlsx",
+  file = here("quarto_documents/anexo_graficos_editables_EAH2024.xlsx"),
   overwrite = TRUE
 )
 ```
 
 
-```{r}
-library(here)
-# -----------------------------
-# IDs de los archivos en Drive
-# (NO CAMBIAN)
-# -----------------------------
-id_informe <- as_id("15AXxZZa26RphOT1PHXmtaZDq9CnYjOEs")     # reemplazá por tu ID real
-id_anexo   <- as_id("1ZMyYLWEOKplj7wJhncNgtV_h9dTmnl60")     # reemplazá por tu ID real
-
-
-# -----------------------------
-# Rutas locales (resultado del render)
-# -----------------------------
-archivo_informe <- here("quarto_documents/primera_infancia_eah2024.docx")
-archivo_anexo   <- here("Anexo_graficos_editables_EAH2024.xlsx")
-
-# -----------------------------
-# Actualizar en Drive
-# -----------------------------
-drive_update(
-  file  = id_informe,
-  media = archivo_informe
-)
-
-drive_update(
-  file  = id_anexo,
-  media = archivo_anexo
-)
-```
