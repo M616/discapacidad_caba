@@ -1,5 +1,5 @@
 ---
-title: "Caracterización de la población de 0 a 5 años con discapacidad"  
+title: "Caracterización de la población de 0 a 5 años con al menos una dificultad funcional (EAH 2024, CABA)"  
 author: "Marcos May"
 date: "`r Sys.Date()`"
 format:
@@ -24,7 +24,7 @@ Se analizan dimensiones vinculadas al tipo de dificultad, características biol�
 
 Los gráficos se presentan en formato editable para su adaptación a piezas institucionales.
 
-Entre las niñas y niños de 0 a 5 años que presentan al menos una dificultad funcional, para el total nacional, el 69,0 % cuenta con certificado de discapacidad (IC 95 %: 52,3–85,7)^[Instituto Nacional de Estadística y Censos (INDEC) (2018). *Estudio Nacional sobre el Perfil de las Personas con Discapacidad*. Buenos Aires: INDEC. Disponible en: https://www.indec.gob.ar/indec/web/Institucional-Indec-BasesDeDatos-7.]
+Como referencia contextual a nivel nacional (INDEC 2018), entre las niñas y niños de 0 a 5 años que presentan al menos una dificultad funcional, el 69,0 % cuenta con certificado de discapacidad (IC 95 %: 52,3–85,7)^[Instituto Nacional de Estadística y Censos (INDEC) (2018). *Estudio Nacional sobre el Perfil de las Personas con Discapacidad*. Buenos Aires: INDEC. Disponible en: https://www.indec.gob.ar/indec/web/Institucional-Indec-BasesDeDatos-7.]
 
 
 ## Consideraciones metodológicas
@@ -385,7 +385,9 @@ tabla_tipos_ft <-
   
   # Título
   set_caption(
-    caption = "Niños y niñas de 0 a 5 años con al menos una dificultad funcional según tipo y sexo"
+    caption = "Niños y niñas de 0 a 5 años 
+    con al menos una dificultad funcional 
+    según tipo y sexo"
   ) |>
   
   # Encabezados
@@ -417,7 +419,11 @@ tabla_tipos_ft
 
 ```
 
+
+Nota: Los tipos de dificultad no son excluyentes; una misma persona puede presentar más de un tipo, por lo que los totales por tipo pueden superponerse.
+
 ```{r}
+
 base <- 
   base %>%
   mutate(
@@ -432,6 +438,85 @@ base <-
     )
   ) 
 
+base_dif <- base %>%
+  select(
+    tipo_vivienda,
+    motora              = dd_tipo_dif1,
+    visual              = dd_tipo_dif2,
+    auditiva            = dd_tipo_dif3,
+    habla_comunicacion  = dd_tipo_dif4,
+    mental_cognitiva    = dd_tipo_dif5,
+    cuidado_si          = dd_tipo_dif6
+  )
+
+
+base_dif_long <- base_dif %>%
+  tidyr::pivot_longer(
+    cols = -tipo_vivienda,
+    names_to  = "tipo_dificultad",
+    values_to = "valor"
+  ) %>%
+  filter(valor == 1)   
+
+
+tabla_tipo_viv <- base_dif_long %>%
+  count(tipo_vivienda, tipo_dificultad) %>%
+  tidyr::pivot_wider(
+    names_from  = tipo_dificultad,
+    values_from = n,
+    values_fill = 0
+  )
+
+
+
+tabla_tipo_viv <- tabla_tipo_viv %>%
+  rename(
+    Motora             = motora,
+    Visual             = visual,
+    Auditiva           = auditiva,
+    `Habla y comunicación` = habla_comunicacion,
+    `Mental-cognitiva` = mental_cognitiva,
+    `Cuidado de sí`    = cuidado_si
+  )
+
+
+tabla_tipo_viv_ft <- 
+  flextable(tabla_tipo_viv) |>
+  set_caption(
+    caption = "Niños y niñas de 0 a 5 años con al menos una dificultad funcional según tipo de vivienda"
+  ) |>
+  
+  # 👇 abreviar nombres (CLAVE)
+  set_header_labels(
+    tipo_vivienda = "Vivienda",
+    Auditiva = "Aud.",
+    `Cuidado de sí` = "Cuidado",
+    `Habla y comunicación` = "Habla",
+    `Mental-cognitiva` = "Mental",
+    Motora = "Mot.",
+    Visual = "Vis."
+  ) |>
+  
+  theme_booktabs() |>
+  bg(part = "header", bg = "#153244") |>
+  color(part = "header", color = "white") |>
+  bold(part = "header") |>
+  
+  align(align = "center", part = "all") |>
+  align(j = 1, align = "left", part = "all") |>
+  
+  fontsize(size = 10, part = "all") |>
+  
+  autofit() |>
+  
+  # 👇 ajuste fino de ancho
+  width(j = 1, width = 2.2) |>   # vivienda
+  width(j = 2:7, width = 0.6)    # numéricas (chicas!)
+
+tabla_tipo_viv_ft
+
+```
+```{r}
   base |> 
   select(
     tipo_vivienda,
@@ -1141,47 +1226,6 @@ wb <- wb |>
 
 
 ```{r}
-base_dif <- base %>%
-  select(
-    tipo_vivienda,
-    motora              = dd_tipo_dif1,
-    visual              = dd_tipo_dif2,
-    auditiva            = dd_tipo_dif3,
-    habla_comunicacion  = dd_tipo_dif4,
-    mental_cognitiva    = dd_tipo_dif5,
-    cuidado_si          = dd_tipo_dif6
-  )
-
-
-base_dif_long <- base_dif %>%
-  tidyr::pivot_longer(
-    cols = -tipo_vivienda,
-    names_to  = "tipo_dificultad",
-    values_to = "valor"
-  ) %>%
-  filter(valor == 1)   
-
-
-tabla_tipo_viv <- base_dif_long %>%
-  count(tipo_vivienda, tipo_dificultad) %>%
-  tidyr::pivot_wider(
-    names_from  = tipo_dificultad,
-    values_from = n,
-    values_fill = 0
-  )
-
-
-
-tabla_tipo_viv <- tabla_tipo_viv %>%
-  rename(
-    Motora             = motora,
-    Visual             = visual,
-    Auditiva           = auditiva,
-    `Habla y comunicación` = habla_comunicacion,
-    `Mental-cognitiva` = mental_cognitiva,
-    `Cuidado de sí`    = cuidado_si
-  )
-
 wb <- wb |> wb_add_worksheet("TipoViv_TipoDif")
 
 wb <- wb |>
