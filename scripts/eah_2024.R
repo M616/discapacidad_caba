@@ -185,7 +185,7 @@ svymean(
   disenio_ana_cons,
   na.rm = TRUE
 )
-#Al desagregar el escenario conservador de altas necesidades de apoyo según tenencia del 
+#Al desagregar el escenario ccon todas las dificultades de altas necesidades de apoyo según tenencia del 
 # Certificado Único de Discapacidad, se observa que el 44,6% cuenta con CUD vigente (CV=9,0%),
 #  mientras que un 49,6% no posee CUD (CV=8,1%). Los grupos con certificado vencido
 #  (1,8%; CV=58,7%) o en trámite (4,0%; CV=38,3%) presentan coeficientes de variación 
@@ -194,6 +194,10 @@ svymean(
 # la necesidad de apoyos intensivos y el acceso efectivo al reconocimiento 
 # administrativo de la discapacidad.
 
+
+##engo entonces esta encuesta del 2024.. ya vi lo del cud.. pero capaz puedo hacer algunos cruces de variables
+#  sociales basicas? entonces despues mostraria esto del cud, y creo que me puede dar pie para luego ir por el 
+# apartado de la base cud de andis, para tomar mas esos datos que puedo incluso desagregarlos por comuna
 
 
 
