@@ -18,6 +18,8 @@ unzip(zipfile = temp_zip, exdir = temp_dir)
 archivos_descomprimidos <- list.files(temp_dir, full.names = TRUE)
 archivos_descomprimidos
 
+diseno <- readxl::read_excel(archivos_descomprimidos[4])
+
 base <- 
   read_delim(archivos_descomprimidos[5],
              delim = ';')
@@ -82,6 +84,16 @@ base$d4n_f <- factor(
 ##porcentaje de la poblacion con mas de 3 necesidades
 base$alta_necesidad_apoyo_3mas <- base$dd_tipo_dif == 9
 
+base <- base |>
+  mutate(
+    grupo_edad = case_when(
+      edad >= 6 & edad <= 14 ~ "6-14",
+      edad >= 15 & edad <= 29 ~ "15-29",
+      edad >= 30 & edad <= 44 ~ "30-44",
+      edad >= 45 & edad <= 64 ~ "45-64",
+      edad >= 65 ~ "65+"
+    )
+  )
 
 disenio <- svydesign(ids = ~1,    # se usa ~1 si no hay conglomerados
                     weights = ~fexp,    # columna de factores de expansión
@@ -199,7 +211,11 @@ svymean(
 #  sociales basicas? entonces despues mostraria esto del cud, y creo que me puede dar pie para luego ir por el 
 # apartado de la base cud de andis, para tomar mas esos datos que puedo incluso desagregarlos por comuna
 
-
+#edad
+#sexo
+#coertura de salud
+#nivel educativo
+#condicion actividad
 
 disenio_ana_cons_sin_cud <- subset(
   disenio,
@@ -227,3 +243,133 @@ tabla_d4n$cv <- tabla_d4n$se / tabla_d4n$prop * 100
 tabla_d4n
 
 
+svymean(
+  ~factor(grupo_edad),
+  subset(
+    disenio,
+    edad >= 6 &
+    alta_necesidad_apoyo_todo_d14 == TRUE
+  ),
+  na.rm = TRUE
+)
+
+
+
+
+## =========================================================
+## CASOS ABSOLUTOS (SIN PONDERAR)
+## PERSONAS CON ALTAS NECESIDADES DE APOYO
+## =========================================================
+
+## criterio principal
+base_ana <- base |>
+  filter(
+    edad >= 6,
+    alta_necesidad_apoyo_todo_d14 == TRUE
+  )
+
+
+
+## =========================================================
+## TOTAL DE CASOS RELEVADOS
+## =========================================================
+
+nrow(base_ana)
+
+
+
+## =========================================================
+## SEXO
+## =========================================================
+
+table(base_ana$sexo)
+
+prop.table(table(base_ana$sexo)) * 100
+
+
+
+## =========================================================
+## GRUPOS DE EDAD
+## =========================================================
+
+base_ana <- base_ana |>
+  mutate(
+    grupo_edad = case_when(
+      edad >= 6  & edad <= 14 ~ "6-14",
+      edad >= 15 & edad <= 29 ~ "15-29",
+      edad >= 30 & edad <= 44 ~ "30-44",
+      edad >= 45 & edad <= 64 ~ "45-64",
+      edad >= 65              ~ "65+"
+    )
+  )
+
+table(base_ana$grupo_edad)
+
+prop.table(table(base_ana$grupo_edad)) * 100
+
+
+
+## =========================================================
+## NIVEL EDUCATIVO
+## (ajustar nombre variable segun EAH)
+## =========================================================
+
+table(base_ana$nivel_ed)
+
+prop.table(table(base_ana$nivel_ed)) * 100
+
+
+
+## =========================================================
+## CONDICION DE ACTIVIDAD
+## (ajustar variable)
+## =========================================================
+
+table(base_ana$condact)
+
+prop.table(table(base_ana$condact)) * 100
+
+
+
+## =========================================================
+## COBERTURA DE SALUD
+## (ajustar variable)
+## =========================================================
+
+table(base_ana$cobertura_salud)
+
+prop.table(table(base_ana$cobertura_salud)) * 100
+
+
+
+## =========================================================
+## TENENCIA DE CUD
+## =========================================================
+
+table(base_ana$dd15)
+
+prop.table(table(base_ana$dd15)) * 100
+
+
+
+## =========================================================
+## MOTIVOS DE NO TENENCIA DE CUD
+## =========================================================
+
+base_ana_sin_cud <- base_ana |>
+  filter(dd15 != 1)
+
+table(base_ana_sin_cud$d4n_f)
+
+prop.table(table(base_ana_sin_cud$d4n_f)) * 100
+
+
+
+## =========================================================
+## COMUNA
+## SOLO DESCRIPTIVO
+## =========================================================
+
+table(base_ana$comuna)
+
+prop.table(table(base_ana$comuna)) * 100
