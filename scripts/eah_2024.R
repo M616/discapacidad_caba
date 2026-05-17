@@ -264,7 +264,7 @@ svymean(
 ## criterio principal
 base_ana <- base |>
   filter(
-    edad >= 6,
+    #edad >= 6,
     alta_necesidad_apoyo_todo_d14 == TRUE
   )
 
@@ -295,6 +295,7 @@ prop.table(table(base_ana$sexo)) * 100
 base_ana <- base_ana |>
   mutate(
     grupo_edad = case_when(
+      edad < 6 ~ "0-5",
       edad >= 6  & edad <= 14 ~ "6-14",
       edad >= 15 & edad <= 29 ~ "15-29",
       edad >= 30 & edad <= 44 ~ "30-44",
@@ -314,9 +315,10 @@ prop.table(table(base_ana$grupo_edad)) * 100
 ## (ajustar nombre variable segun EAH)
 ## =========================================================
 
-table(base_ana$nivel_ed)
+#asiste a establecimiento educativo
+table(base_ana$e2)
 
-prop.table(table(base_ana$nivel_ed)) * 100
+prop.table(table(base_ana$nivel)) * 100
 
 
 
@@ -325,9 +327,9 @@ prop.table(table(base_ana$nivel_ed)) * 100
 ## (ajustar variable)
 ## =========================================================
 
-table(base_ana$condact)
+table(base_ana$estado)
 
-prop.table(table(base_ana$condact)) * 100
+prop.table(table(base_ana$estado)) * 100
 
 
 
@@ -336,9 +338,10 @@ prop.table(table(base_ana$condact)) * 100
 ## (ajustar variable)
 ## =========================================================
 
-table(base_ana$cobertura_salud)
+#tipo cobertura de salud
+table(base_ana$tipcob2_2 )
 
-prop.table(table(base_ana$cobertura_salud)) * 100
+prop.table(table(base_ana$tipcob2_2)) * 100
 
 
 
@@ -364,12 +367,3 @@ table(base_ana_sin_cud$d4n_f)
 prop.table(table(base_ana_sin_cud$d4n_f)) * 100
 
 
-
-## =========================================================
-## COMUNA
-## SOLO DESCRIPTIVO
-## =========================================================
-
-table(base_ana$comuna)
-
-prop.table(table(base_ana$comuna)) * 100
