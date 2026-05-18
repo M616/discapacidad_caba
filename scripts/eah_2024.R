@@ -433,6 +433,30 @@ prop.table(table(base_ana$nivel)) * 100
 
 
 
+
+base_ana <- base_ana |>
+  mutate(
+    e2_f = factor(
+      e2,
+      levels = c(1,2,3),
+      labels = c(
+        "Asiste",
+        "No asiste pero asistió",
+        "Nunca asistió"
+      )
+    )
+  )
+
+tabla_edu_edad <- base_ana |>
+  count(grupo_edad, e2_f) |>
+  group_by(grupo_edad) |>
+  mutate(
+    porcentaje = round(n / sum(n) * 100, 1)
+  )
+
+tabla_edu_edad
+
+
 ## =========================================================
 ## CONDICION DE ACTIVIDAD
 ## (ajustar variable)
