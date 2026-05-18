@@ -1,7 +1,8 @@
 {library(tidyverse)
 library(survey)
 library(srvyr)
-library(ggthemes)}
+library(ggthemes)
+library(flextable)}
 
 options(scipen = 999)
 
@@ -19,6 +20,7 @@ archivos_descomprimidos <- list.files(temp_dir, full.names = TRUE)
 archivos_descomprimidos
 
 diseno <- readxl::read_excel(archivos_descomprimidos[4])
+calculo_cv <- readxl::read_excel(archivos_descomprimidos[2])
 
 base <- 
   read_delim(archivos_descomprimidos[5],
@@ -101,8 +103,21 @@ disenio <- svydesign(ids = ~1,    # se usa ~1 si no hay conglomerados
 
 ###porcentaje de personas con alta necesidad de apoyo
 svymean(~alta_necesidad_apoyo_laxo,  
+  #subset(disenio,
+  #    edad >= 6),
+  design = disenio,
+      na.rm = TRUE)
+
+base |>
+  filter(alta_necesidad_apoyo_laxo == 1) |>
+  summarise(
+    n_absoluto = n(),
+    total_expandido = sum(fexp, na.rm = TRUE)
+  )
+###porcentaje de personas con alta necesidad de apoyo dentro de la poblacion con discapacidad
+svymean(~alta_necesidad_apoyo_laxo,  
   subset(disenio,
-      edad >= 6),
+      dd_con_dif == 1),
       na.rm = TRUE)
 
 #poblacion 6 y más con discapacidad 
@@ -111,14 +126,10 @@ disenio_pcd_6mas <- subset(
   dd_con_dif == 1 & edad >= 6
 )
 
-##si hago esto me promedia las categorias de dd_con_dif. esta como numerica, saca el promedio
-svymean(~dd_con_dif,  
-  subset(disenio,
-      edad >= 6),
-      na.rm = TRUE)
 
 svymean(~I(dd_con_dif == 1),
-        subset(disenio, edad >= 6),
+        #subset(disenio, edad >= 6),
+        design = disenio,
         na.rm = TRUE)
 
 
@@ -130,8 +141,8 @@ svymean(~alta_necesidad_apoyo_laxo, disenio_pcd_6mas, na.rm = TRUE)
 
 ###porcentaje de personas con alta necesidad de apoyo
 svymean(~alta_necesidad_apoyo_cons,  
-  subset(disenio,
-      edad >= 6),
+  #subset(disenio,      edad >= 6),
+  design = disenio,
       na.rm = TRUE)
 
 ###porcentaje de personas con alta necesidad de apoyo, todas las necesidades
@@ -168,23 +179,123 @@ svymean(
 
 
 
-###pruebo a abrir por comuna, tiene baja precisión
-res_comuna <- svyby(
+#-------------------------------------------------
+# TABLA SÍNTESIS ESCENARIOS DE APOYO
+#-------------------------------------------------
+
+# Escenario laxo
+laxo_n <- base |>
+  filter(alta_necesidad_apoyo_laxo == 1) |>
+  nrow()
+
+laxo_exp <- base |>
+  filter(alta_necesidad_apoyo_laxo == 1) |>
+  summarise(total = sum(fexp, na.rm = TRUE)) |>
+  pull(total)
+
+laxo_prop <- svymean(
+  ~alta_necesidad_apoyo_laxo,
+  disenio,
+  na.rm = TRUE
+)[1]
+
+# Escenario conservador
+cons_n <- base |>
+  filter(alta_necesidad_apoyo_cons == TRUE) |>
+  nrow()
+
+cons_exp <- base |>
+  filter(alta_necesidad_apoyo_cons == TRUE) |>
+  summarise(total = sum(fexp, na.rm = TRUE)) |>
+  pull(total)
+
+cons_prop <- svymean(
   ~alta_necesidad_apoyo_cons,
-  ~comuna,
-  subset(disenio, edad >= 6),
-  svymean,
-  na.rm = TRUE,
-  vartype = "se"
+  disenio,
+  na.rm = TRUE
+)[2]
+
+# Escenario alta intensidad
+alta_n <- base |>
+  filter(alta_necesidad_apoyo_todo_d14 == TRUE) |>
+  nrow()
+
+alta_exp <- base |>
+  filter(alta_necesidad_apoyo_todo_d14 == TRUE) |>
+  summarise(total = sum(fexp, na.rm = TRUE)) |>
+  pull(total)
+
+alta_prop <- svymean(
+  ~alta_necesidad_apoyo_todo_d14,
+  disenio,
+  na.rm = TRUE
+)[2]
+
+#-------------------------------------------------
+# ARMADO TABLA
+#-------------------------------------------------
+
+tabla_escenarios <- tibble(
+  `Escenario operativo` = c(
+    "Laxo",
+    "Conservador",
+    "Alta intensidad"
+  ),
+
+  Definicion = c(
+    "Necesidad de apoyo en ≥1 actividad básica",
+    "Necesidad de apoyo en ≥2 actividades básicas",
+    "Necesidad de apoyo en la totalidad de las actividades relevadas"
+  ),
+
+  `Casos relevados (n)` = c(
+    laxo_n,
+    cons_n,
+    alta_n
+  ),
+
+  `Total expandido` = c(
+    round(laxo_exp),
+    round(cons_exp),
+    round(alta_exp)
+  ),
+
+  `% población` = c(
+    round(laxo_prop * 100, 1),
+    round(cons_prop * 100, 1),
+    round(alta_prop * 100, 2)
+  ),
+
+  `CV aproximado` = c(
+    "~5,6%",
+    "~7%",
+    "~15%"
+  )
 )
 
-res_comuna
+#-------------------------------------------------
+# FLEXTABLE
+#-------------------------------------------------
 
-res_comuna$cv_true <- with(
-  res_comuna,
-  se.alta_necesidad_apoyo_consTRUE /
-    alta_necesidad_apoyo_consTRUE * 100
-)
+tabla_ft <- tabla_escenarios |>
+  flextable() |>
+  autofit() |>
+  theme_booktabs() |>
+  bg(part = "header", bg = "#153244") |>
+  color(part = "header", color = "white") |>
+  align(align = "center", part = "all") |>
+  valign(valign = "center", part = "all") |>
+  fontsize(size = 10, part = "all") |>
+  bold(part = "header") |>
+  set_caption(
+    caption = "Tabla 1. Escenarios operativos de altas necesidades de apoyo. EAH 2024"
+  )
+
+tabla_ft
+
+
+
+
 
 ###para ver la poblacion con alta necesidad de apoyo que tiene certificado (todo d14_n)
 disenio_ana_cons <- subset(
