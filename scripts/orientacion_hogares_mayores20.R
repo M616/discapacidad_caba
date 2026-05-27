@@ -31,7 +31,7 @@ orientaciones <- c(
   "Residencia"
 )
 
-base_tabla <- 
+base <- 
   base |>
  mutate(
     fecha_de_nacimiento = dmy(fecha_de_nacimiento),
@@ -39,15 +39,20 @@ base_tabla <-
     edad =
       interval(
         fecha_de_nacimiento,
-        today()
+        today()-1
+        
       ) / years(1)
-  ) |>
+  )
+
+
+base_tabla <- 
+base   |>
 
   # -----------------------------
   # filtrar mayores de 20
   # -----------------------------
   filter(
-    edad >= 20
+    edad > 20
   ) |>
   # id único por persona
   mutate(
@@ -123,3 +128,4 @@ bind_rows(base_tabla,
         `Total n`  = sum(`Total n`)
 
       ))
+base |> filter(edad>20) |> nrow()
