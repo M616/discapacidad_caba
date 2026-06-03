@@ -1,0 +1,251 @@
+---
+title: "EAH 2024 - Módulo discapacidad"
+subtitle: "Análisis exploratorio"
+author: "Marcos May"
+format: html
+editor: visual
+---
+
+::: {style="position: absolute; top: 10px; right: 10px;"}
+<img src="https://www.estadisticaciudad.gob.ar/eyc/wp-content/uploads/2024/07/logo-BA-Azul.png" width="150"/>
+:::
+
+```{r , setup, include=FALSE, echo=FALSE}
+{library(tidyverse)
+library(survey)
+library(srvyr)
+library(ggthemes)
+library(kableExtra)
+library(scales)
+}
+```
+
+```{r carga_base, include=FALSE, echo=FALSE}
+enlace <- 'https://www.estadisticaciudad.gob.ar/eyc/wp-content/uploads/2025/04/eah2024_bu_ampliada.zip'
+temp_dir <- tempdir()
+temp_zip <- file.path(temp_dir, "archivo_descargado.zip")
+download.file(url = enlace, 
+              destfile = temp_zip, 
+              method = "auto", 
+              mode = "wb") # 'wb' para Windows, importante para archivos binarios
+
+unzip(zipfile = temp_zip, exdir = temp_dir)
+
+archivos_descomprimidos <- list.files(temp_dir, full.names = TRUE)
+archivos_descomprimidos
+
+diseno <- readxl::read_excel(here(temp_dir,'eah2024_bu_ampliada_ind_diseño_de_registros.xlsx'))
+calculo_cv <- readxl::read_excel(here(temp_dir,'eah2024_bu_ampliada_calculo_cv.xls'))
+
+base <- 
+  read_delim(here(temp_dir,'eah2024_bu_ampliada_ind.txt'),
+             delim = ';')
+
+```
+
+Incidencia sobre población total
+
+```{r incidencia_total, echo= FALSE, message = FALSE  , warning =FALSE}
+disenio <- svydesign(ids = ~1,    # se usa ~1 si no hay conglomerados
+                    weights = ~fexp,    # columna de factores de expansión
+                    data = base)
+
+
+#disenio_pcd_6mas <- subset(
+#  disenio,
+#  dd_con_dif == 1 & edad >= 6
+#)
+
+
+# estimación
+res <- svymean(
+  ~I(dd_con_dif == 1),
+  disenio,
+  na.rm = TRUE
+)
+
+# extraer valores
+prop <- coef(res)["I(dd_con_dif == 1)TRUE"]
+se   <- SE(res)["I(dd_con_dif == 1)TRUE"]
+
+ci   <- confint(res)
+low  <- ci["I(dd_con_dif == 1)TRUE", 1]
+upp  <- ci["I(dd_con_dif == 1)TRUE", 2]
+
+# formato texto
+prop_text <- percent(prop, accuracy = 0.1)
+low_text  <- percent(low,  accuracy = 0.1)
+upp_text  <- percent(upp,  accuracy = 0.1)
+
+```
+
+## Prevalencia de dificultad
+
+La prevalencia de población con alguna dificultad es de 
+**`r prop_text`** 
+(IC 95%: `r low_text`–`r upp_text`).
+
+
+
+
+
+Incidencia poblacion mayor a 5
+
+```{r incidencia>5, echo= FALSE, message = FALSE  , warning =FALSE}
+
+base_survey |> 
+  filter(edad > 5 ) |> 
+  group_by(alguna_dificultad) %>%
+  summarise(prop = round(survey_prop( level = 0.95, 
+                               vartype = 'cv')*100),
+            Total = survey_total( level = 0.95, 
+                               vartype = 'cv')) |>
+  select(-Total_cv) |> 
+  kableExtra::kable()
+```
+
+Población mayor a 6. Proporcion de personas con al menos una dificultad que tiene certificado de discapacidad
+
+```{r proporcion_certificado, echo=FALSE}
+
+base_survey <- 
+  base_survey %>%
+  mutate(certificado = 
+           case_when (dd15 == 1 ~ 'si',
+                      dd15 == 9 ~ NA_character_,
+                      TRUE ~ 'no') )
+
+base_survey |> 
+  filter(edad > 5 & alguna_dificultad == 'si' ) |> 
+  group_by(certificado) %>%
+  summarise(prop = round(survey_prop( level = 0.95, 
+                               vartype = 'cv')*100))|> kableExtra::kable()
+
+```
+
+Tipo de certificado
+
+```{r tipo_certificado, echo=FALSE}
+#base_survey <- 
+  base_survey |> 
+  filter(d2a %in% c(1,2) ) |> # 1 es cud, 2 es no cud
+  mutate(tipo_certificado = case_when(d2a == 1 ~ 'CUD',
+                                      TRUE ~ 'Otro')) |> 
+  group_by(tipo_certificado) |> 
+  summarise(porcentaje = round(survey_prop( level = 0.95, 
+                               vartype = 'cv')*100))|> kableExtra::kable()
+
+```
+
+De las personas con certificado (91 mil), el 85% (78 mil) de las personas tiene CUD
+
+```{r tipo_dificultad, echo=FALSE}
+
+#### tipo dificultad
+base_survey <- 
+  base_survey |> 
+  #filter( dd_tipo_dif != 0  ) |> 
+  mutate(tipo_dificultad = case_when( dd_tipo_dif == 1  ~ 'Sólo dificultad motora',
+                                      dd_tipo_dif == 2  ~ 'Sólo dificultad visual',
+                                      dd_tipo_dif == 3  ~ 'Sólo dificultad auditiva',
+                                      dd_tipo_dif == 4  ~ 'Sólo dificultad del habla y comunicación',
+                                      dd_tipo_dif == 5  ~ 'Sólo dificultad mental cognitiva',
+                                      dd_tipo_dif == 6  ~ 'Sólo dificultad del cuidado de sí mismo',
+                                      dd_tipo_dif == 7  ~ 'Sólo certificado de discapacidad',
+                                      dd_tipo_dif == 8  ~ '2 dificultades',
+                                      dd_tipo_dif == 9  ~ '3 o más dificultades'))
+
+
+
+###### tipo de dificultad ####
+df_plot <- 
+  as.data.frame(svytable(~tipo_dificultad, 
+                         design = base_survey))
+
+colnames(df_plot) <- c("tipo_dificultad", "n")
+
+# Calcular porcentaje
+df_plot <- df_plot %>%
+  mutate(percentage = (n / sum(n)) * 100) %>%  # Convertir a porcentaje
+  arrange(desc(n))
+
+# Crear el gráfico
+ggplot(df_plot, 
+       aes(y = reorder(tipo_dificultad, n),
+           x = n, 
+           fill = tipo_dificultad)) +
+  geom_bar(stat = "identity", fill = "#FF3333", show.legend = FALSE) +
+  geom_text(aes(label = paste0(round(percentage), "%")),  # Etiquetas con porcentaje
+            hjust = -0.1, size = 3)+
+  scale_fill_viridis_d() +  
+    scale_x_continuous(limits = c(0, 70000)) +
+  labs(
+    title = "Distribución de Tipos de Dificultades",
+    y = "Tipo de Dificultad",
+    x = "Cantidad de personas"
+  ) +
+  theme_minimal () +
+  theme(
+    plot.title = element_text(hjust = 3, face = "bold"),  # Centrar el título
+    axis.text.x = element_text(angle = 45, hjust = 1),  # Rotar etiquetas si es necesario
+    axis.title.y = element_text(margin = margin(r = 15)),  # Separar título del eje Y
+    axis.title.x = element_text(margin = margin(t = 10)),  # Separar título del eje X
+    axis.text.y = element_text(hjust = 0.5)  # Centrar etiquetas del eje Y
+  )
+```
+
+## '¿Recibe la asistencia o la ayuda que necesita habitualmente de otra persona?' (d15)
+
+```{r , echo=FALSE}
+
+base_survey <- 
+  base_survey %>%
+  mutate(necesidad_asistencia = case_when(d15 == 1 ~ 'si',
+                                         TRUE ~ 'no'))
+  
+  
+base_survey %>% 
+  filter(d15 != 0 ) %>% 
+  group_by(necesidad_asistencia ) %>% 
+  summarise(porcentaje = round(survey_prop( level = 0.95, 
+                               vartype = 'cv')*100),
+            Total = survey_total(level = 0.95,
+                                 vartype = 'cv' )) %>% 
+  kableExtra::kable()
+
+```
+
+Personas que necesitan asistencia el total poblacional.
+
+```{r , echo=FALSE}
+
+base_survey %>% 
+  group_by(necesidad_asistencia ) %>% 
+  summarise(porcentaje = round(survey_prop( level = 0.95, 
+                               vartype = 'cv')*100,3),
+            Total = survey_total(level = 0.95,
+                                 vartype = 'cv' )) %>% 
+  kableExtra::kable()
+
+
+```
+
+Personas que necesitan asistencia mayores de 5 años
+
+```{r , echo=FALSE}
+
+base_survey %>% 
+  filter(edad > 5) |> 
+  group_by(necesidad_asistencia ) %>% 
+  summarise(porcentaje = round(survey_prop( level = 0.95, 
+                               vartype = 'cv')*100,3),
+            Total = survey_total(level = 0.95,
+                                 vartype = 'cv' )) %>% 
+  kableExtra::kable()
+
+
+```
+
+## Personas con necesidad asistencia por edad
+
+personas con necesidad asistenica con certificado discapacidad ver cud
