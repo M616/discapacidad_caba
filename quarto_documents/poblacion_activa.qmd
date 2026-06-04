@@ -1,0 +1,175 @@
+---
+title: "Estimación preliminar de la población en condiciones de trabajar"
+author: "Marcos May"
+date: "2026-06-04"
+format: pdf
+editor: visual
+---
+
+```{r echo=FALSE, out.width="150px"}
+#knitr::include_graphics("https://www.estadisticaciudad.gob.ar/eyc/wp-content/uploads/2024/07/logo-BA-Azul.png")
+```
+
+
+## Introducción
+
+El presente informe tiene como objetivo analizar la población de 18 a 60 años registrada en la base ANDIS, con foco en su **potencial vinculación con la actividad laboral**. En particular se busca aproximar el universo de personas que se encuentran en condiciones de trabajar, independientemente de su situación efectiva en el mercado de trabajo.
+
+Como referencia externa se utilizan resultados de la Encuesta Anual de Hogares (EAH) 2024 de la Dirección General de Estadística y Censos (IDECBA) que permite caracterizar la participación en el mercado de trabajo bajo criterios estandarizados. No obstante, ambas fuentes responden a metodologías y objetivos diferentes: mientras la EAH releva información mediante encuestas diseñadas para la medición del mercado laboral, la base ANDIS tiene carácter administrativo.
+
+En este marco, el análisis se orienta no a estimar la población económicamente activa en sentido estricto, sino a aproximar la **población en condiciones de trabajar**, independientemente de su participación efectiva en el mercado laboral.
+
+Los resultados que se presentan deben interpretarse considerando estas diferencias, utilizando la EAH como referencia y la base ANDIS como fuente para la caracterización interna de la población registrada.
+
+
+```{r setup, echo=FALSE, warning=FALSE, message=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE,      
+  warning = FALSE,   
+  message = FALSE    
+)
+```
+
+
+```{r librerias}
+library(tidyverse)
+library(survey)
+library(srvyr)
+library(ggthemes)
+library(flextable)
+library(googledrive)
+library(janitor)
+
+options(scipen = 999)
+```
+
+
+```{r cargo_archivos}
+enlace <- 'https://www.estadisticaciudad.gob.ar/eyc/wp-content/uploads/2025/04/eah2024_bu_ampliada.zip'
+temp_dir <- tempdir()
+temp_zip <- file.path(temp_dir, "archivo_descargado.zip")
+download.file(url = enlace, 
+              destfile = temp_zip, 
+              method = "auto", 
+              mode = "wb",
+              overwrite = FALSE ) # 'wb' para Windows, importante para archivos binarios
+
+unzip(zipfile = temp_zip, exdir = temp_dir)
+
+archivos_descomprimidos <- list.files(temp_dir, full.names = TRUE)
+
+diseno <- readxl::read_excel(archivos_descomprimidos[4])
+calculo_cv <- readxl::read_excel(archivos_descomprimidos[2])
+
+base <- 
+  read_delim(archivos_descomprimidos[5],
+             delim = ';')
+
+eah_resumen <- base |>
+  filter(dd_con_dif == 1, edad >= 18, edad <= 60) |>
+  group_by(estado) |>
+  summarise(cantidad = sum(fexp), .groups = "drop") |>
+  mutate(porcentaje = cantidad / sum(cantidad) * 100)
+
+ocupados <- eah_resumen |> filter(estado == 1)
+desocupados <- eah_resumen |> filter(estado == 2)
+inactivos <- eah_resumen |> filter(estado == 3)
+
+pea_pct <- ocupados$porcentaje + desocupados$porcentaje
+
+```
+
+## Referencia externa: EAH 2024 (IDECBA)
+
+Como punto de comparación, se presentan resultados de la Encuesta Anual de Hogares (EAH) 2024 de la Dirección General de Estadística y Censos (IDECBA) considerando la población de **18 a 60 años con dificultades**.
+
+La distribución según condición de actividad es la siguiente:
+
+- **Ocupados**: `r round(ocupados$porcentaje, 1)`% (`r format(ocupados$cantidad, big.mark = ".", decimal.mark = ",")` personas)  
+- **Desocupados**: `r round(desocupados$porcentaje, 1)`% (`r format(desocupados$cantidad, big.mark = ".", decimal.mark = ",")` personas)  
+- **Inactivos**: `r round(inactivos$porcentaje, 1)`% (`r format(inactivos$cantidad, big.mark = ".", decimal.mark = ",")` personas)  
+
+En conjunto, la **población económicamente activa (PEA)** —ocupados y desocupados— alcanza el **`r round(pea_pct, 1)`%**, mientras que la población inactiva representa el **`r round(inactivos$porcentaje, 1)`%**.
+
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+
+###base andis
+dir.create('data')
+#base de marzo2026
+#drive_download('https://drive.google.com/file/d/1RcwuOIMC94PnhgrCysF1wXjdvPd2DzAv/view?usp=drive_link', 
+#path = "data/DGIND-DA-CUD_ABRIL_v1(CABA)_recibida 21-05.csv", overwrite = FALSE)
+andis <- read_delim('data/DGIND-DA-CUD_ABRIL_v1(CABA)_recibida 21-05.csv')
+andis<-clean_names(andis)
+andis <- andis |> filter(provincia_de_residencia == 'Ciudad Autónoma de Buenos Aires') 
+
+
+andis <- andis |>
+  mutate(
+    fecha_de_nacimiento = dmy(fecha_de_nacimiento),
+    edad = time_length(
+      interval(fecha_de_nacimiento, ymd("2026-04-01")),
+      "years"
+    )
+  )
+
+
+no_corresponde_edad <- andis |>
+  filter(condicion_de_actividad == "No corresponde") |>
+  summarise(
+    n = n(),
+    min = min(edad, na.rm = TRUE),
+    q1 = quantile(edad, 0.25, na.rm = TRUE),
+    mediana = median(edad, na.rm = TRUE),
+    media = mean(edad, na.rm = TRUE),
+    q3 = quantile(edad, 0.75, na.rm = TRUE),
+    max = max(edad, na.rm = TRUE),
+    sd = sd(edad, na.rm = TRUE)
+  )
+
+#andis |> filter(edad >=18 & edad <=60 & condicion_de_actividad == 'No corresponde') |>
+#  count(tipo_de_deficiencia_simple_multiple) |> arrange(desc(n))
+```
+
+
+
+```{r andis_resumen}
+andis_resumen <- andis |>
+  filter(edad >= 18, edad <= 60) |>
+  count(condicion_de_actividad) |>
+  mutate(porcentaje = n / sum(n) * 100)
+
+trabaja <- andis_resumen |> filter(condicion_de_actividad == "Trabaja")
+no_trabaja <- andis_resumen |> filter(condicion_de_actividad == "No trabaja")
+no_corresponde <- andis_resumen |> filter(condicion_de_actividad == "No corresponde")
+```
+
+## Base ANDIS
+
+Para la población de **18 a 60 años**, la distribución según la variable `condicion_de_actividad` es la siguiente:
+
+- **Trabaja**: `r round(trabaja$porcentaje, 1)`% (`r format(trabaja$n, big.mark = ".", decimal.mark = ",")` personas)  
+- **No trabaja**: `r round(no_trabaja$porcentaje, 1)`% (`r format(no_trabaja$n, big.mark = ".", decimal.mark = ",")` personas)  
+- **No corresponde**: `r round(no_corresponde$porcentaje, 2)`% (`r format(no_corresponde$n, big.mark = ".", decimal.mark = ",")` personas)  
+
+A diferencia de la EAH, en la base ANDIS esta variable no permite distinguir entre población desocupada e inactiva. Por lo tanto, no es posible reconstruir directamente la población económicamente activa en términos comparables con los estándares estadísticos.
+
+Sin embargo el requerimiento analítico no se orienta a identificar participación efectiva en el mercado laboral, sino a aproximar la **población en condiciones de trabajar**, independientemente de su inserción o búsqueda de empleo.
+
+En este sentido, la categoría **"No trabaja"** incluye tanto personas potencialmente disponibles para el trabajo como otras que no participan del mercado laboral por distintos motivos. Asimismo, la categoría **"No corresponde"** presenta heterogeneidad conceptual: si bien su incidencia es baja dentro del rango etario analizado, el análisis exploratorio sugiere que concentra casos de menor edad y perfiles con mayores niveles de complejidad en términos de deficiencias, lo que podría estar asociado a situaciones donde la actividad laboral no resulta aplicable (es necesario contrastar con las juntas u otra información disponible).
+
+Cabe destacar además que la base ANDIS refiere a población con certificado, mientras que encuestas como la EAH captan dificultades funcionales en un sentido más amplio por lo que **no toda la población con discapacidad se encuentra representada en registros administrativos**.
+
+En este marco la información de la EAH se utiliza como **referencia externa**, mientras que los resultados de ANDIS permiten caracterizar la población registrada bajo criterios administrativos y explorar aproximaciones alternativas.
+
+
+## Línea de análisis propuesta
+
+Como siguiente paso se propone avanzar en una aproximación indirecta a la población en condiciones de trabajar a partir de la información disponible en ANDIS. En particular se plantea:
+
+- Analizar la distribución de diagnósticos (clasificación CIE-10) en la población que actualmente **trabaja**.
+- Identificar perfiles de deficiencia asociados a inserción laboral efectiva.
+- Extender ese patrón al conjunto de la base para estimar la población potencialmente en condiciones de trabajar.
+
+Este enfoque permitiría construir un indicador aproximado basado en evidencia empírica interna, complementando las limitaciones de la variable `condicion_de_actividad`.
+``
