@@ -13,13 +13,13 @@ editor: visual
 
 ## Introducción
 
-El presente informe tiene como objetivo analizar la población de 18 a 60 años registrada en la base ANDIS, con foco en su **potencial vinculación con la actividad laboral**. En particular se busca aproximar el universo de personas que se encuentran en condiciones de trabajar, independientemente de su situación efectiva en el mercado de trabajo.
+El presente informe tiene como objetivo analizar la población de 18 a 60 años registrada en la base SENADIS, con foco en su **potencial vinculación con la actividad laboral**. En particular se busca aproximar el universo de personas que se encuentran en condiciones de trabajar, independientemente de su situación efectiva en el mercado de trabajo.
 
-Como referencia externa se utilizan resultados de la Encuesta Anual de Hogares (EAH) 2024 de la Dirección General de Estadística y Censos (IDECBA) que permite caracterizar la participación en el mercado de trabajo bajo criterios estandarizados. No obstante, ambas fuentes responden a metodologías y objetivos diferentes: mientras la EAH releva información mediante encuestas diseñadas para la medición del mercado laboral, la base ANDIS tiene carácter administrativo.
+Como referencia externa se utilizan resultados de la Encuesta Anual de Hogares (EAH) 2024 de la Dirección General de Estadística y Censos (IDECBA) que permite caracterizar la participación en el mercado de trabajo bajo criterios estandarizados. No obstante, ambas fuentes responden a metodologías y objetivos diferentes: mientras la EAH releva información mediante encuestas diseñadas para la medición del mercado laboral, la base SENADIS tiene carácter administrativo.
 
 En este marco, el análisis se orienta no a estimar la población económicamente activa en sentido estricto, sino a aproximar la **población en condiciones de trabajar**, independientemente de su participación efectiva en el mercado laboral.
 
-Los resultados que se presentan deben interpretarse considerando estas diferencias, utilizando la EAH como referencia y la base ANDIS como fuente para la caracterización interna de la población registrada.
+Los resultados que se presentan deben interpretarse considerando estas diferencias, utilizando la EAH como referencia y la base SENADIS como fuente para la caracterización interna de la población registrada.
 
 
 ```{r setup, echo=FALSE, warning=FALSE, message=FALSE}
@@ -91,7 +91,7 @@ La distribución según condición de actividad es la siguiente:
 
 En conjunto, la **población económicamente activa (PEA)** —ocupados y desocupados— alcanza el **`r round(pea_pct, 1)`%**, mientras que la población inactiva representa el **`r round(inactivos$porcentaje, 1)`%**.
 
-
+Los valores presentados corresponden a estimaciones ponderadas de la encuesta. En función del carácter exploratorio del análisis, se reportan únicamente los valores centrales, sin detallar medidas de precisión.
 ```{r echo=FALSE, warning=FALSE, message=FALSE}
 
 ###base andis
@@ -144,7 +144,7 @@ no_trabaja <- andis_resumen |> filter(condicion_de_actividad == "No trabaja")
 no_corresponde <- andis_resumen |> filter(condicion_de_actividad == "No corresponde")
 ```
 
-## Base ANDIS
+## Base SENADIS
 
 Para la población de **18 a 60 años**, la distribución según la variable `condicion_de_actividad` es la siguiente:
 
@@ -152,20 +152,20 @@ Para la población de **18 a 60 años**, la distribución según la variable `co
 - **No trabaja**: `r round(no_trabaja$porcentaje, 1)`% (`r format(no_trabaja$n, big.mark = ".", decimal.mark = ",")` personas)  
 - **No corresponde**: `r round(no_corresponde$porcentaje, 2)`% (`r format(no_corresponde$n, big.mark = ".", decimal.mark = ",")` personas)  
 
-A diferencia de la EAH, en la base ANDIS esta variable no permite distinguir entre población desocupada e inactiva. Por lo tanto, no es posible reconstruir directamente la población económicamente activa en términos comparables con los estándares estadísticos.
+A diferencia de la EAH, en la base SENADIS esta variable no permite distinguir entre población desocupada e inactiva. Por lo tanto, no es posible reconstruir directamente la población económicamente activa en términos comparables con los estándares estadísticos.
 
 Sin embargo el requerimiento analítico no se orienta a identificar participación efectiva en el mercado laboral, sino a aproximar la **población en condiciones de trabajar**, independientemente de su inserción o búsqueda de empleo.
 
 En este sentido, la categoría **"No trabaja"** incluye tanto personas potencialmente disponibles para el trabajo como otras que no participan del mercado laboral por distintos motivos. Asimismo, la categoría **"No corresponde"** presenta heterogeneidad conceptual: si bien su incidencia es baja dentro del rango etario analizado, el análisis exploratorio sugiere que concentra casos de menor edad y perfiles con mayores niveles de complejidad en términos de deficiencias, lo que podría estar asociado a situaciones donde la actividad laboral no resulta aplicable (es necesario contrastar con las juntas u otra información disponible).
 
-Cabe destacar además que la base ANDIS refiere a población con certificado, mientras que encuestas como la EAH captan dificultades funcionales en un sentido más amplio por lo que **no toda la población con discapacidad se encuentra representada en registros administrativos**.
+Cabe destacar además que la base SENADIS refiere a población con certificado, mientras que encuestas como la EAH captan dificultades funcionales en un sentido más amplio por lo que **no toda la población con discapacidad se encuentra representada en registros administrativos**.
 
-En este marco la información de la EAH se utiliza como **referencia externa**, mientras que los resultados de ANDIS permiten caracterizar la población registrada bajo criterios administrativos y explorar aproximaciones alternativas.
+En este marco la información de la EAH se utiliza como **referencia externa**, mientras que los resultados de SENADIS permiten caracterizar la población registrada bajo criterios administrativos y explorar aproximaciones alternativas.
 
 
 ## Línea de análisis propuesta
 
-Como siguiente paso se propone avanzar en una aproximación indirecta a la población en condiciones de trabajar a partir de la información disponible en ANDIS. En particular se plantea:
+Como siguiente paso se propone avanzar en una aproximación indirecta a la población en condiciones de trabajar a partir de la información disponible en SENADIS. En particular se plantea:
 
 - Analizar la distribución de diagnósticos (clasificación CIE-10) en la población que actualmente **trabaja**.
 - Identificar perfiles de deficiencia asociados a inserción laboral efectiva.
