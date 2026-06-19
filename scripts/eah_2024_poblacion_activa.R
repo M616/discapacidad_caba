@@ -2,7 +2,9 @@
 library(survey)
 library(srvyr)
 library(ggthemes)
-library(flextable)}
+library(flextable)
+library(googledrive)
+library(janitor)}
 
 options(scipen = 999)
 
@@ -42,3 +44,19 @@ base |>
 
 
 table(base$dd_con_dif)
+
+
+###base andis
+dir.create('data')
+#base de marzo2026
+drive_download('https://drive.google.com/file/d/1RcwuOIMC94PnhgrCysF1wXjdvPd2DzAv/view?usp=drive_link', 
+path = "data/DGIND-DA-CUD_ABRIL_v1(CABA)_recibida 21-05.csv",
+overwrite = FALSE)
+andis <- read_delim('data/DGIND-DA-CUD_ABRIL_v1(CABA)_recibida 21-05.csv')
+andis<-clean_names(andis)
+andis <- andis |> filter(provincia_de_residencia == 'Ciudad Autónoma de Buenos Aires') 
+
+andis |> count(condicion_de_actividad) 
+
+#no corresponde?
+
