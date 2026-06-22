@@ -5,7 +5,8 @@ library(ggthemes)
 library(flextable)
 library(googledrive)
 library(janitor)
-library(readxl)}
+library(readxl)
+library(data.table)}
 
 options(scipen = 999)
 
