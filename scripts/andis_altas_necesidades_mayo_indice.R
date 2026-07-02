@@ -11,8 +11,7 @@ library(mapview)
 library(googlesheets4)
 #library(readxl)
 library(openxlsx)
-library(janitor)
-}
+library(janitor)}
 
 dir.create('data')
 #base de marzo2026
