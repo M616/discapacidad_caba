@@ -19,7 +19,7 @@ unzip(zipfile = temp_zip, exdir = temp_dir)
 archivos_descomprimidos <- list.files(temp_dir, full.names = TRUE)
 archivos_descomprimidos
 
-diseno <- readxl::read_excel(archivos_descomprimidos[4])
+diseno <- readxl::read_excel(archivos_descomprimidos[5])
 calculo_cv <- readxl::read_excel(archivos_descomprimidos[2])
 
 base <- 
@@ -502,3 +502,554 @@ table(base_ana_sin_cud$d4n_f)
 prop.table(table(base_ana_sin_cud$d4n_f)) * 100
 
 
+
+
+
+# ============================================================
+# EAH 2024 - Módulo discapacidad
+# Altas necesidades de apoyo - CABA
+# Marcos May
+# ============================================================
+
+library(tidyverse)
+library(survey)
+library(srvyr)
+library(flextable)
+library(readxl)
+
+options(scipen = 999)
+options(survey.lonely.psu = "adjust")
+
+# ------------------------------------------------------------
+# 1. Descarga y carga de base
+# ------------------------------------------------------------
+
+enlace <- "https://www.estadisticaciudad.gob.ar/eyc/wp-content/uploads/2025/04/eah2024_bu_ampliada.zip"
+
+temp_dir <- tempdir()
+temp_zip <- file.path(temp_dir, "eah2024_bu_ampliada.zip")
+
+download.file(
+  url = enlace,
+  destfile = temp_zip,
+  method = "auto",
+  mode = "wb"
+)
+
+unzip(zipfile = temp_zip, exdir = temp_dir)
+
+archivos <- list.files(temp_dir, full.names = TRUE)
+
+print(archivos)
+
+# Ajustar si el orden cambia
+diseno_registros <- read_excel(archivos[3])
+calculo_cv       <- read_excel(archivos[1])
+
+base <- read_delim(
+  archivos[4],
+  delim = ";",
+  show_col_types = FALSE
+)
+
+# ------------------------------------------------------------
+# 2. Chequeo de variables clave
+# ------------------------------------------------------------
+
+vars_clave <- c(
+  "id", "nhogar", "miembro",
+  "comuna", "dominio",
+  "edad", "sexo",
+  "estado", "nivel5", "e2",
+  "tipcob2_2",
+  "dd_con_dif", "dd_tipo_dif", "dd15",
+  "d4n",
+  paste0("d14n_", 1:11),
+  "fexp"
+)
+
+data.frame(
+  variable = vars_clave,
+  existe = vars_clave %in% names(base)
+) |> print(row.names = FALSE)
+
+# ------------------------------------------------------------
+# 3. Recodificaciones
+# ------------------------------------------------------------
+
+base <- base |>
+  mutate(
+    # ---------------------------------------
+    # Sexo
+    # ---------------------------------------
+    sexo_f = factor(
+      sexo,
+      levels = c(1, 2),
+      labels = c("Varón", "Mujer")
+    ),
+
+    # ---------------------------------------
+    # Grupo de edad
+    # ---------------------------------------
+    grupo_edad = case_when(
+      edad < 6 ~ "0-5",
+      edad >= 6  & edad <= 14 ~ "6-14",
+      edad >= 15 & edad <= 29 ~ "15-29",
+      edad >= 30 & edad <= 44 ~ "30-44",
+      edad >= 45 & edad <= 64 ~ "45-64",
+      edad >= 65 ~ "65+",
+      TRUE ~ NA_character_
+    ),
+
+    grupo_edad = factor(
+      grupo_edad,
+      levels = c("0-5", "6-14", "15-29", "30-44", "45-64", "65+")
+    ),
+
+    # ---------------------------------------
+    # Persona con dificultad / discapacidad
+    # dd_con_dif:
+    # 1 = Tiene al menos una dificultad/discapacidad
+    # 2 = No tiene dificultad / Ns/Nc
+    # ---------------------------------------
+    pcd = if_else(dd_con_dif == 1, 1, 0, missing = 0),
+
+    pcd_6mas = if_else(dd_con_dif == 1 & edad >= 6, 1, 0, missing = 0),
+
+    # ---------------------------------------
+    # Certificado de discapacidad
+    # dd15:
+    # 1 vigente, 2 vencido, 3 en trámite,
+    # 4 no tiene, 9 Ns/Nc
+    # ---------------------------------------
+    dd15_f = factor(
+      dd15,
+      levels = c(1, 2, 3, 4, 9),
+      labels = c(
+        "Certificado vigente",
+        "Certificado vencido",
+        "En trámite",
+        "No tiene certificado",
+        "Ns/Nc"
+      )
+    ),
+
+    tiene_certificado_vigente = if_else(dd15 == 1, 1, 0, missing = 0),
+
+    # ---------------------------------------
+    # Motivo de no tenencia de certificado
+    # d4n
+    # ---------------------------------------
+    d4n_f = factor(
+      d4n,
+      levels = c(1,2,3,4,5,6,7,8,9,10),
+      labels = c(
+        "No sabe que existe",
+        "No sabe para qué sirve",
+        "No sabe cómo obtenerlo / es complicado",
+        "Le queda lejos el lugar",
+        "No lo quiere",
+        "No lo necesita",
+        "No lo renovó",
+        "Cree que lo puede perjudicar",
+        "Se lo denegaron",
+        "Otro motivo"
+      )
+    ),
+
+    # ---------------------------------------
+    # Condición de actividad
+    # estado:
+    # 1 ocupado, 2 desocupado, 3 inactivo
+    # ---------------------------------------
+    estado_f = factor(
+      estado,
+      levels = c(1, 2, 3),
+      labels = c("Ocupado", "Desocupado", "Inactivo")
+    ),
+
+    # ---------------------------------------
+    # Tipo de cobertura de salud
+    # ---------------------------------------
+    cobertura_f = factor(
+      tipcob2_2,
+      levels = c(1, 2, 3, 4, 5, 9),
+      labels = c(
+        "Sólo sistema público",
+        "Sólo obra social",
+        "Sólo prepaga o mutual vía obra social",
+        "Sólo prepaga por contratación voluntaria",
+        "Otros / dos o más sistemas",
+        "Ns/Nc"
+      )
+    ),
+
+    # ---------------------------------------
+    # Asistencia educativa
+    # e2:
+    # 1 asiste, 2 no asiste pero asistió, 3 nunca asistió
+    # ---------------------------------------
+    e2_f = factor(
+      e2,
+      levels = c(1, 2, 3, 9),
+      labels = c(
+        "Asiste",
+        "No asiste pero asistió",
+        "Nunca asistió",
+        "Ns/Nc"
+      )
+    ),
+
+    # ---------------------------------------
+    # Máximo nivel educativo
+    # nivel5
+    # ---------------------------------------
+    nivel_f = factor(
+      nivel,
+      levels = c(0,1,2,3,4,5,6,7,8,9),
+      labels = c(
+        "Otras escuelas especiales",
+        "Inicial",
+        "Primario incompleto",
+        "Primario completo",
+        "Secundario incompleto",
+        "Secundario completo",
+        "Superior incompleto",
+        "Superior completo",
+        "Sin instrucción",
+        "Ns/Nc"
+      )
+    )
+  )
+
+# ------------------------------------------------------------
+# 4. Construcción de escenarios de altas necesidades de apoyo
+# ------------------------------------------------------------
+
+# Variables d14n_1 a d14n_10: asistencia habitual en actividades de la vida diaria.
+d14_principales <- paste0("d14n_", 1:10)
+
+base <- base |>
+  mutate(
+    # AVD básicas seleccionadas:
+    # comer/beber, higienizarse, vestirse, medicación/visitas médicas
+    n_avd_basicas = rowSums(
+      across(
+        c(d14n_2, d14n_3, d14n_4, d14n_10),
+        ~ .x == 1
+      ),
+      na.rm = TRUE
+    ),
+
+    # Escenario laxo:
+    # necesidad de asistencia en al menos una AVD básica
+    ana_laxo = if_else(n_avd_basicas >= 1, 1, 0, missing = 0),
+
+    # Escenario conservador:
+    # necesidad de asistencia en dos o más AVD básicas
+    ana_conservador = if_else(n_avd_basicas >= 2, 1, 0, missing = 0),
+
+    # Escenario alta intensidad:
+    # requiere asistencia en todas las actividades d14n_1 a d14n_10
+    ana_alta_intensidad = if_else(
+      if_all(all_of(d14_principales), ~ .x == 1),
+      1, 0, missing = 0
+    ),
+
+    # Severidad estructural:
+    # dd_tipo_dif == 9 = tres o más dificultades
+    ana_3mas_dificultades = if_else(dd_tipo_dif == 9, 1, 0, missing = 0)
+  )
+
+# ------------------------------------------------------------
+# 5. Diseño muestral
+# ------------------------------------------------------------
+
+disenio <- svydesign(
+  ids = ~1,
+  weights = ~fexp,
+  data = base
+)
+
+disenio_6mas <- subset(disenio, edad >= 6)
+
+disenio_pcd_6mas <- subset(
+  disenio,
+  edad >= 6 & dd_con_dif == 1
+)
+
+# ------------------------------------------------------------
+# 6. Funciones auxiliares
+# ------------------------------------------------------------
+
+cv_svy <- function(x) {
+  as.numeric(SE(x) / coef(x) * 100)
+}
+
+estimar_binaria <- function(var, design, etiqueta = NULL) {
+
+  formula_var <- as.formula(paste0("~", var))
+
+  prop <- svymean(formula_var, design, na.rm = TRUE)
+  total <- svytotal(formula_var, design, na.rm = TRUE)
+
+  tibble(
+    variable = var,
+    escenario = if_else(is.null(etiqueta), var, etiqueta),
+    proporcion = as.numeric(coef(prop)[1]),
+    porcentaje = proporcion * 100,
+    se_pct = as.numeric(SE(prop)[1]) * 100,
+    cv_pct = as.numeric(cv_svy(prop)[1]),
+    total_expandido = as.numeric(coef(total)[1]),
+    total_se = as.numeric(SE(total)[1]),
+    total_cv_pct = as.numeric(cv_svy(total)[1])
+  )
+}
+
+tabla_categorica <- function(var, design, etiqueta = NULL) {
+
+  f <- as.formula(paste0("~factor(", var, ")"))
+
+  prop <- svymean(f, design, na.rm = TRUE)
+  total <- svytotal(f, design, na.rm = TRUE)
+
+  categorias <- names(coef(prop)) |>
+    str_replace_all(paste0("factor\\(", var, "\\)"), "") |>
+    str_trim()
+
+  tibble(
+    variable = if_else(is.null(etiqueta), var, etiqueta),
+    categoria = categorias,
+    proporcion = as.numeric(coef(prop)),
+    porcentaje = proporcion * 100,
+    se_pct = as.numeric(SE(prop)) * 100,
+    cv_pct = as.numeric(SE(prop) / coef(prop) * 100),
+    total_expandido = as.numeric(coef(total)),
+    total_se = as.numeric(SE(total)),
+    total_cv_pct = as.numeric(SE(total) / coef(total) * 100)
+  ) |>
+    arrange(desc(total_expandido))
+}
+
+# ------------------------------------------------------------
+# 7. Tabla síntesis de escenarios sobre población total CABA
+# ------------------------------------------------------------
+
+tabla_escenarios_total <- bind_rows(
+  estimar_binaria(
+    "ana_laxo",
+    disenio,
+    "Laxo: asistencia en ≥1 AVD básica"
+  ),
+  estimar_binaria(
+    "ana_conservador",
+    disenio,
+    "Conservador: asistencia en ≥2 AVD básicas"
+  ),
+  estimar_binaria(
+    "ana_alta_intensidad",
+    disenio,
+    "Alta intensidad: asistencia en todas las actividades d14n_1 a d14n_10"
+  ),
+  estimar_binaria(
+    "ana_3mas_dificultades",
+    disenio_6mas,
+    "Severidad estructural: tres o más dificultades"
+  )
+)
+
+tabla_escenarios_total
+
+# ------------------------------------------------------------
+# 8. Tabla de escenarios sobre población con discapacidad 6+
+# ------------------------------------------------------------
+
+tabla_escenarios_pcd_6mas <- bind_rows(
+  estimar_binaria(
+    "ana_laxo",
+    disenio_pcd_6mas,
+    "Laxo: asistencia en ≥1 AVD básica"
+  ),
+  estimar_binaria(
+    "ana_conservador",
+    disenio_pcd_6mas,
+    "Conservador: asistencia en ≥2 AVD básicas"
+  ),
+  estimar_binaria(
+    "ana_alta_intensidad",
+    disenio_pcd_6mas,
+    "Alta intensidad: asistencia en todas las actividades d14n_1 a d14n_10"
+  ),
+  estimar_binaria(
+    "ana_3mas_dificultades",
+    disenio_pcd_6mas,
+    "Severidad estructural: tres o más dificultades"
+  )
+)
+
+tabla_escenarios_pcd_6mas
+
+# ------------------------------------------------------------
+# 9. Casos absolutos sin ponderar por escenario
+# ------------------------------------------------------------
+
+casos_escenarios <- base |>
+  summarise(
+    n_total_base = n(),
+    n_pcd = sum(dd_con_dif == 1, na.rm = TRUE),
+    n_laxo = sum(ana_laxo == 1, na.rm = TRUE),
+    n_conservador = sum(ana_conservador == 1, na.rm = TRUE),
+    n_alta_intensidad = sum(ana_alta_intensidad == 1, na.rm = TRUE),
+    n_3mas_dificultades = sum(ana_3mas_dificultades == 1, na.rm = TRUE)
+  )
+
+casos_escenarios
+
+# ------------------------------------------------------------
+# 10. Tabla compacta para informe
+# ------------------------------------------------------------
+
+tabla_informe_escenarios <- tibble(
+  `Escenario operativo` = c(
+    "Laxo",
+    "Conservador",
+    "Alta intensidad"
+  ),
+
+  Definicion = c(
+    "Necesidad de apoyo en ≥1 actividad básica",
+    "Necesidad de apoyo en ≥2 actividades básicas",
+    "Necesidad de apoyo en la totalidad de las actividades relevadas"
+  ),
+
+  `Casos relevados (n)` = c(
+    sum(base$ana_laxo == 1, na.rm = TRUE),
+    sum(base$ana_conservador == 1, na.rm = TRUE),
+    sum(base$ana_alta_intensidad == 1, na.rm = TRUE)
+  ),
+
+  `Total expandido` = c(
+    tabla_escenarios_total$total_expandido[tabla_escenarios_total$variable == "ana_laxo"],
+    tabla_escenarios_total$total_expandido[tabla_escenarios_total$variable == "ana_conservador"],
+    tabla_escenarios_total$total_expandido[tabla_escenarios_total$variable == "ana_alta_intensidad"]
+  ),
+
+  `% población` = c(
+    tabla_escenarios_total$porcentaje[tabla_escenarios_total$variable == "ana_laxo"],
+    tabla_escenarios_total$porcentaje[tabla_escenarios_total$variable == "ana_conservador"],
+    tabla_escenarios_total$porcentaje[tabla_escenarios_total$variable == "ana_alta_intensidad"]
+  ),
+
+  `CV aproximado` = c(
+    tabla_escenarios_total$cv_pct[tabla_escenarios_total$variable == "ana_laxo"],
+    tabla_escenarios_total$cv_pct[tabla_escenarios_total$variable == "ana_conservador"],
+    tabla_escenarios_total$cv_pct[tabla_escenarios_total$variable == "ana_alta_intensidad"]
+  )
+) |>
+  mutate(
+    `Total expandido` = round(`Total expandido`, 0),
+    `% población` = round(`% población`, 2),
+    `CV aproximado` = round(`CV aproximado`, 1)
+  )
+
+tabla_informe_escenarios
+
+# ------------------------------------------------------------
+# 11. Flextable para informe
+# ------------------------------------------------------------
+
+tabla_ft <- tabla_informe_escenarios |>
+  flextable() |>
+  autofit() |>
+  theme_booktabs() |>
+  bg(part = "header", bg = "#153244") |>
+  color(part = "header", color = "white") |>
+  align(align = "center", part = "all") |>
+  valign(valign = "center", part = "all") |>
+  fontsize(size = 10, part = "all") |>
+  bold(part = "header") |>
+  set_caption(
+    caption = "Tabla. Escenarios operativos de altas necesidades de apoyo. EAH 2024"
+  )
+
+tabla_ft
+
+# ------------------------------------------------------------
+# 12. Caracterización básica del escenario de alta intensidad
+# ------------------------------------------------------------
+
+disenio_alta <- subset(
+  disenio,
+  ana_alta_intensidad == 1
+)
+
+base_alta <- base |>
+  filter(ana_alta_intensidad == 1)
+
+# Casos relevados
+nrow(base_alta)
+
+# Caracterización ponderada
+tabla_alta_sexo <- tabla_categorica("sexo_f", disenio_alta, "Sexo")
+tabla_alta_edad <- tabla_categorica("grupo_edad", disenio_alta, "Grupo de edad")
+tabla_alta_certificado <- tabla_categorica("dd15_f", disenio_alta, "Certificado")
+tabla_alta_cobertura <- tabla_categorica("cobertura_f", disenio_alta, "Cobertura de salud")
+tabla_alta_actividad <- tabla_categorica("estado_f", disenio_alta, "Condición de actividad")
+tabla_alta_educacion <- tabla_categorica("nivel5_f", disenio_alta, "Máximo nivel educativo")
+
+tabla_alta_sexo
+tabla_alta_edad
+tabla_alta_certificado
+tabla_alta_cobertura
+tabla_alta_actividad
+tabla_alta_educacion
+
+# Caracterización sin ponderar, útil por baja cantidad de casos
+tabla_alta_no_ponderada <- list(
+  sexo = base_alta |> count(sexo_f) |> mutate(pct = n / sum(n) * 100),
+  edad = base_alta |> count(grupo_edad) |> mutate(pct = n / sum(n) * 100),
+  certificado = base_alta |> count(dd15_f) |> mutate(pct = n / sum(n) * 100),
+  cobertura = base_alta |> count(cobertura_f) |> mutate(pct = n / sum(n) * 100),
+  actividad = base_alta |> count(estado_f) |> mutate(pct = n / sum(n) * 100),
+  educacion = base_alta |> count(nivel5_f) |> mutate(pct = n / sum(n) * 100)
+)
+
+tabla_alta_no_ponderada
+
+# ------------------------------------------------------------
+# 13. Motivos de no tenencia de certificado
+# ------------------------------------------------------------
+
+disenio_alta_sin_cert <- subset(
+  disenio,
+  ana_alta_intensidad == 1 &
+    dd15 != 1 &
+    !is.na(d4n)
+)
+
+tabla_motivos_sin_cert <- tabla_categorica(
+  "d4n_f",
+  disenio_alta_sin_cert,
+  "Motivo de no tenencia de certificado vigente"
+)
+
+tabla_motivos_sin_cert
+
+# ------------------------------------------------------------
+# 14. Exportar resultados
+# ------------------------------------------------------------
+
+dir.create("salidas_eah2024", showWarnings = FALSE)
+
+write_csv(tabla_escenarios_total, "salidas_eah2024/tabla_escenarios_total.csv")
+write_csv(tabla_escenarios_pcd_6mas, "salidas_eah2024/tabla_escenarios_pcd_6mas.csv")
+write_csv(tabla_informe_escenarios, "salidas_eah2024/tabla_informe_escenarios.csv")
+write_csv(casos_escenarios, "salidas_eah2024/casos_escenarios.csv")
+
+write_csv(tabla_alta_sexo, "salidas_eah2024/alta_intensidad_sexo.csv")
+write_csv(tabla_alta_edad, "salidas_eah2024/alta_intensidad_edad.csv")
+write_csv(tabla_alta_certificado, "salidas_eah2024/alta_intensidad_certificado.csv")
+write_csv(tabla_alta_cobertura, "salidas_eah2024/alta_intensidad_cobertura.csv")
+write_csv(tabla_alta_actividad, "salidas_eah2024/alta_intensidad_actividad.csv")
+write_csv(tabla_alta_educacion, "salidas_eah2024/alta_intensidad_educacion.csv")
+write_csv(tabla_motivos_sin_cert, "salidas_eah2024/motivos_sin_certificado.csv")

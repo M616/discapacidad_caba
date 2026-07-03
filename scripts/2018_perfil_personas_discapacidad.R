@@ -193,10 +193,9 @@ eval_calidad_indec(cud)
 # install.packages(c("data.table", "dplyr", "survey", "stringr", "tidyr"))
 
 library(data.table)
-library(dplyr)
 library(survey)
 library(stringr)
-library(tidyr)
+
 
 options(survey.lonely.psu = "adjust")
 options(scipen = 999)
@@ -209,26 +208,22 @@ options(scipen = 999)
 # La base usuario del INDEC suele venir como CSV separado por ;
 # La base de réplicas también viene como CSV separado por ;
 
-base_path <- "base_estudio.csv"
-rep_path  <- "base_replicas.csv"
-
 # Carpeta de salida
-out_dir <- "salidas_enppd_2018"
+out_dir <- "data/salidas_enppd_2018"
 dir.create(out_dir, showWarnings = FALSE)
 
 # ------------------------------------------------------------
 # 2. Carga de datos
 # ------------------------------------------------------------
 
-base <- fread(
-  base_path,
+base <- fread('data/enppd/base_estudio_discapacidad_2018.csv',
   sep = ";",
   encoding = "UTF-8",
   na.strings = c("", "NA", "NaN")
 )
 
 reps <- fread(
-  rep_path,
+  'data/enppd/base_replicas_estudio_discapacidad_2018.csv',
   sep = ";",
   encoding = "UTF-8",
   na.strings = c("", "NA", "NaN")
@@ -458,12 +453,12 @@ df <- df %>%
     ),
 
     max_nivel_educativo_lab = case_when(
-      mne == 1 ~ "Hasta primario completo",
-      mne == 2 ~ "Secundario incompleto",
-      mne == 3 ~ "Educación integral",
-      mne == 4 ~ "Secundario completo",
-      mne == 5 ~ "Superior / universitario / posgrado",
-      mne == 6 ~ "No especifica / ignorado",
+      mnea == 1 ~ "Hasta primario completo",
+      mnea == 2 ~ "Secundario incompleto",
+      mnea == 3 ~ "Educación integral",
+      mnea == 4 ~ "Secundario completo",
+      mnea == 5 ~ "Superior / universitario / posgrado",
+      mnea == 6 ~ "No especifica / ignorado",
       TRUE ~ NA_character_
     ),
 
