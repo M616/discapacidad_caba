@@ -181,15 +181,10 @@ df_final = base.merge(
 
 df_final.to_csv("data/processed/usig/usig_octubre25.csv", encoding="utf-8")
 
-#df_final = pd.read_csv("data/processed/usig/usig_marzo.csv") 
+df_final = pd.read_csv("data/processed/usig/usig_octubre25.csv") 
 
 import geopandas as gpd
 
-#gdf = gpd.GeoDataFrame(
-#    df_final,
-#    geometry=gpd.points_from_xy(df_final["lon"], df_final["lat"]),
-#    crs="EPSG:4326"
-#)
 
 #cargo comunas 
 url_comunas_caba = (
@@ -213,7 +208,6 @@ base = gpd.GeoDataFrame(
 
 #base = gpd.read_file ("data/processed/usig/usig_direcciones_cud_marzo.gpkg")
 
-import geopandas as gpd
 
 base = gpd.sjoin(
     base,
@@ -222,11 +216,27 @@ base = gpd.sjoin(
     predicate="intersects"
     )
 
+
+
 import numpy as np
 
+#porcentaje de avisos geocodificados
+base[base["comuna"].notna()].shape[0] / base.shape[0]  * 100
 
-# filtrar comuna no nula
-base = base[base["comuna_right"].notna()]
+# filtrar comuna no nula[]
+base = base[base["comuna"].notna()]
+
+#calculo el porcentaje de casos por comuna
+porcentaje_comuna = (
+    base["comuna"]
+    .value_counts(normalize=True)
+    .mul(100)
+    .reset_index()
+)
+
+porcentaje_comuna.columns = ["comuna", "porcentaje"]
+print(porcentaje_comuna.sort_values("porcentaje", ascending=False))
+
 
 # filtrar geometrías no vacías
 base = base[~base.geometry.is_empty]

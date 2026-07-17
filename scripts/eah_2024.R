@@ -19,7 +19,7 @@ unzip(zipfile = temp_zip, exdir = temp_dir)
 archivos_descomprimidos <- list.files(temp_dir, full.names = TRUE)
 archivos_descomprimidos
 
-diseno <- readxl::read_excel(archivos_descomprimidos[5])
+diseno <- readxl::read_excel(archivos_descomprimidos[4])
 calculo_cv <- readxl::read_excel(archivos_descomprimidos[2])
 
 base <- 
@@ -543,11 +543,11 @@ archivos <- list.files(temp_dir, full.names = TRUE)
 print(archivos)
 
 # Ajustar si el orden cambia
-diseno_registros <- read_excel(archivos[3])
-calculo_cv       <- read_excel(archivos[1])
+diseno_registros <- read_excel(archivos[4])
+calculo_cv       <- read_excel(archivos[2])
 
 base <- read_delim(
-  archivos[4],
+  archivos[5],
   delim = ";",
   show_col_types = FALSE
 )
@@ -560,7 +560,7 @@ vars_clave <- c(
   "id", "nhogar", "miembro",
   "comuna", "dominio",
   "edad", "sexo",
-  "estado", "nivel5", "e2",
+  "estado", "nivel", "e2",
   "tipcob2_2",
   "dd_con_dif", "dd_tipo_dif", "dd15",
   "d4n",
@@ -995,7 +995,7 @@ tabla_alta_edad <- tabla_categorica("grupo_edad", disenio_alta, "Grupo de edad")
 tabla_alta_certificado <- tabla_categorica("dd15_f", disenio_alta, "Certificado")
 tabla_alta_cobertura <- tabla_categorica("cobertura_f", disenio_alta, "Cobertura de salud")
 tabla_alta_actividad <- tabla_categorica("estado_f", disenio_alta, "Condición de actividad")
-tabla_alta_educacion <- tabla_categorica("nivel5_f", disenio_alta, "Máximo nivel educativo")
+tabla_alta_educacion <- tabla_categorica("nivel_f", disenio_alta, "Máximo nivel educativo")
 
 tabla_alta_sexo
 tabla_alta_edad
@@ -1011,7 +1011,7 @@ tabla_alta_no_ponderada <- list(
   certificado = base_alta |> count(dd15_f) |> mutate(pct = n / sum(n) * 100),
   cobertura = base_alta |> count(cobertura_f) |> mutate(pct = n / sum(n) * 100),
   actividad = base_alta |> count(estado_f) |> mutate(pct = n / sum(n) * 100),
-  educacion = base_alta |> count(nivel5_f) |> mutate(pct = n / sum(n) * 100)
+  educacion = base_alta |> count(nivel_f) |> mutate(pct = n / sum(n) * 100)
 )
 
 tabla_alta_no_ponderada
@@ -1039,17 +1039,17 @@ tabla_motivos_sin_cert
 # 14. Exportar resultados
 # ------------------------------------------------------------
 
-dir.create("salidas_eah2024", showWarnings = FALSE)
+dir.create("data/salidas_eah2024", showWarnings = FALSE)
 
-write_csv(tabla_escenarios_total, "salidas_eah2024/tabla_escenarios_total.csv")
-write_csv(tabla_escenarios_pcd_6mas, "salidas_eah2024/tabla_escenarios_pcd_6mas.csv")
-write_csv(tabla_informe_escenarios, "salidas_eah2024/tabla_informe_escenarios.csv")
-write_csv(casos_escenarios, "salidas_eah2024/casos_escenarios.csv")
+write_csv(tabla_escenarios_total, "data/salidas_eah2024/tabla_escenarios_total.csv")
+write_csv(tabla_escenarios_pcd_6mas, "data/salidas_eah2024/tabla_escenarios_pcd_6mas.csv")
+write_csv(tabla_informe_escenarios, "data/salidas_eah2024/tabla_informe_escenarios.csv")
+write_csv(casos_escenarios, "data/salidas_eah2024/casos_escenarios.csv")
 
-write_csv(tabla_alta_sexo, "salidas_eah2024/alta_intensidad_sexo.csv")
-write_csv(tabla_alta_edad, "salidas_eah2024/alta_intensidad_edad.csv")
-write_csv(tabla_alta_certificado, "salidas_eah2024/alta_intensidad_certificado.csv")
-write_csv(tabla_alta_cobertura, "salidas_eah2024/alta_intensidad_cobertura.csv")
-write_csv(tabla_alta_actividad, "salidas_eah2024/alta_intensidad_actividad.csv")
-write_csv(tabla_alta_educacion, "salidas_eah2024/alta_intensidad_educacion.csv")
-write_csv(tabla_motivos_sin_cert, "salidas_eah2024/motivos_sin_certificado.csv")
+write_csv(tabla_alta_sexo, "data/salidas_eah2024/alta_intensidad_sexo.csv")
+write_csv(tabla_alta_edad, "data/salidas_eah2024/alta_intensidad_edad.csv")
+write_csv(tabla_alta_certificado, "data/salidas_eah2024/alta_intensidad_certificado.csv")
+write_csv(tabla_alta_cobertura, "data/salidas_eah2024/alta_intensidad_cobertura.csv")
+write_csv(tabla_alta_actividad, "data/salidas_eah2024/alta_intensidad_actividad.csv")
+write_csv(tabla_alta_educacion, "data/salidas_eah2024/alta_intensidad_educacion.csv")
+write_csv(tabla_motivos_sin_cert, "data/salidas_eah2024/motivos_sin_certificado.csv")
