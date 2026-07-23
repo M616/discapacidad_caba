@@ -67,7 +67,7 @@ with zipfile.ZipFile("data/processed/domicilios.zip", "w", compression=zipfile.Z
 
 
 #base=pd.read_csv("data/processed/domicilios.csv") 
-base_devuelta = pd.read_excel("data/raw/idecba/discapacidad_entrega1 GEO - Copia.xlsx", engine="openpyxl")
+base_devuelta = pd.read_excel("data/raw/idecba/discapacidad_entrega1 GEO.xlsx", engine="openpyxl")
 
 base_devuelta = base_devuelta.clean_names()
 
@@ -141,7 +141,7 @@ faltantes = merged[merged['_merge'] == 'left_only']
 
 base_devuelta['id_clean'] = base_devuelta.apply(
     lambda row: hash_string(
-        f"{normalizar(row['domicilio'])}_{str(row['numero_domicilio']).strip()}"
+        f"{normalizar(row['domicilio_c_254'])}_{str(row['numero_dom_c_254']).strip()}"
     ),
     axis=1
 )
