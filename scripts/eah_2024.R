@@ -19,11 +19,11 @@ unzip(zipfile = temp_zip, exdir = temp_dir)
 archivos_descomprimidos <- list.files(temp_dir, full.names = TRUE)
 archivos_descomprimidos
 
-diseno <- readxl::read_excel(archivos_descomprimidos[4])
-calculo_cv <- readxl::read_excel(archivos_descomprimidos[2])
+diseno <- readxl::read_excel('data/raw/idecba/eah2024_bu_ampliada/eah2024_bu_ampliada_ind_diseño_de_registros.xlsx')
+calculo_cv <- readxl::read_excel('data/raw/idecba/eah2024_bu_ampliada/eah2024_bu_ampliada_calculo_cv.xls')
 
 base <- 
-  read_delim(archivos_descomprimidos[5],
+  read_delim('data/raw/idecba/eah2024_bu_ampliada/eah2024_bu_ampliada_ind.txt',
              delim = ';')
 
 
