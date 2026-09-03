@@ -28,22 +28,74 @@ base <-
   read_delim(archivos_descomprimidos[5],
              delim = ';')
 
+
+#tasa de actividad de las personas con alguna dificultad. 1= ocupado, 2=desocupado, 3= inactivo
+estado_disca<-
 base |> 
-  filter(dd_con_dif == 1 & edad >= 18 & edad <= 60) |> 
+  #filter(dd_con_dif == 1 & edad >= 18 & edad <= 60) |> 
   #filter(dd_con_dif == 1 & dd15 !=4) |> 
+  filter(dd_con_dif == 1) |> 
   group_by(estado) |> 
   summarise(cantidad = sum(fexp)) |> 
   mutate(porcentaje = (cantidad / sum(cantidad)*100))
 
-
-base |> 
+#tasas para personas con alguna dificultad
+tasas_disca <- 
+  base %>%
   filter(dd_con_dif == 1) |> 
-  group_by(dd15) |> 
-  summarise(cantidad = sum(fexp)) |> 
-  mutate(porcentaje = (cantidad / sum(cantidad)*100))
+  filter(!is.na(estado), !is.na(fexp)) %>%
+  summarise(
+    poblacion_total = sum(fexp, na.rm = TRUE),
+    poblacion_referencia = sum(fexp[edad > 13], na.rm = TRUE),
+    ocupados = sum(fexp[estado == 1], na.rm = TRUE),
+    desocupados = sum(fexp[estado == 2], na.rm = TRUE),
+    pea = ocupados + desocupados,
+
+    tasa_actividad = round(100 * pea / poblacion_total, 2),
+    tasa_empleo = round(100 * ocupados / poblacion_referencia, 2),
+    tasa_desempleo = round(100 * desocupados / pea, 2)
+  ) |> 
+pivot_longer(
+  cols = everything(),
+  names_to = "indicador",
+  values_to = "porcentaje") %>%
+  mutate(
+indicador = recode(
+  indicador,
+  tasa_actividad = "Tasa de actividad",
+  tasa_empleo = "Tasa de empleo",
+  tasa_desempleo = "Tasa de desempleo"))
 
 
-table(base$dd_con_dif)
+
+#####tasas para el resto
+#tasas para personas con alguna dificultad
+tasas <- 
+  base %>%
+  #filter(dd_con_dif == 1) |> 
+  filter(!is.na(estado), !is.na(fexp)) %>%
+  summarise(
+    poblacion_total = sum(fexp, na.rm = TRUE),
+    poblacion_referencia = sum(fexp[edad > 13], na.rm = TRUE),
+    ocupados = sum(fexp[estado == 1], na.rm = TRUE),
+    desocupados = sum(fexp[estado == 2], na.rm = TRUE),
+    pea = ocupados + desocupados,
+
+    tasa_actividad = round(100 * pea / poblacion_total, 2),
+    tasa_empleo = round(100 * ocupados / poblacion_referencia, 2),
+    tasa_desempleo = round(100 * desocupados / pea, 2)
+  ) |> 
+pivot_longer(
+  cols = everything(),
+  names_to = "indicador",
+  values_to = "porcentaje") %>%
+  mutate(
+indicador = recode(
+  indicador,
+  tasa_actividad = "Tasa de actividad",
+  tasa_empleo = "Tasa de empleo",
+  tasa_desempleo = "Tasa de desempleo"))
+
 
 
 ###base andis
