@@ -30,71 +30,63 @@ base <-
 
 
 #tasa de actividad de las personas con alguna dificultad. 1= ocupado, 2=desocupado, 3= inactivo
-estado_disca<-
-base |> 
-  #filter(dd_con_dif == 1 & edad >= 18 & edad <= 60) |> 
-  #filter(dd_con_dif == 1 & dd15 !=4) |> 
-  filter(dd_con_dif == 1) |> 
-  group_by(estado) |> 
-  summarise(cantidad = sum(fexp)) |> 
-  mutate(porcentaje = (cantidad / sum(cantidad)*100))
 
-#tasas para personas con alguna dificultad
-tasas_disca <- 
-  base %>%
-  filter(dd_con_dif == 1) |> 
-  filter(!is.na(estado), !is.na(fexp)) %>%
-  summarise(
-    poblacion_total = sum(fexp, na.rm = TRUE),
-    poblacion_referencia = sum(fexp[edad > 13], na.rm = TRUE),
-    ocupados = sum(fexp[estado == 1], na.rm = TRUE),
-    desocupados = sum(fexp[estado == 2], na.rm = TRUE),
-    pea = ocupados + desocupados,
+##################funcion para calcular tasas
+calcular_tasas <- function(datos) {
+  datos %>%
+    filter(
+      edad >= 14,
+      edad <= 65,
+      !is.na(estado),
+      !is.na(fexp)
+    ) %>%
+    summarise(
+      poblacion_referencia = sum(fexp, na.rm = TRUE),
+      ocupados = sum(fexp[estado == 1], na.rm = TRUE),
+      desocupados = sum(fexp[estado == 2], na.rm = TRUE),
+      pea = ocupados + desocupados,
 
-    tasa_actividad = round(100 * pea / poblacion_total, 2),
-    tasa_empleo = round(100 * ocupados / poblacion_referencia, 2),
-    tasa_desempleo = round(100 * desocupados / pea, 2)
-  ) |> 
-pivot_longer(
-  cols = everything(),
-  names_to = "indicador",
-  values_to = "porcentaje") %>%
-  mutate(
-indicador = recode(
-  indicador,
-  tasa_actividad = "Tasa de actividad",
-  tasa_empleo = "Tasa de empleo",
-  tasa_desempleo = "Tasa de desempleo"))
+      tasa_actividad = round(
+        100 * pea / poblacion_referencia, 1
+      ),
+
+      tasa_empleo = round(
+        100 * ocupados / poblacion_referencia, 1
+      ),
+
+      tasa_desempleo = round(
+        100 * desocupados / pea, 1
+      )
+    )
+}
 
 
+tasas_total <- base %>%
+  calcular_tasas() %>%
+  mutate(poblacion = "Población total")
 
-#####tasas para el resto
-#tasas para personas con alguna dificultad
-tasas <- 
-  base %>%
-  #filter(dd_con_dif == 1) |> 
-  filter(!is.na(estado), !is.na(fexp)) %>%
-  summarise(
-    poblacion_total = sum(fexp, na.rm = TRUE),
-    poblacion_referencia = sum(fexp[edad > 13], na.rm = TRUE),
-    ocupados = sum(fexp[estado == 1], na.rm = TRUE),
-    desocupados = sum(fexp[estado == 2], na.rm = TRUE),
-    pea = ocupados + desocupados,
+tasas_dificultad <- base %>%
+  filter(dd_con_dif == 1) %>%
+  calcular_tasas() %>%
+  mutate(poblacion = "Población con alguna dificultad")
 
-    tasa_actividad = round(100 * pea / poblacion_total, 2),
-    tasa_empleo = round(100 * ocupados / poblacion_referencia, 2),
-    tasa_desempleo = round(100 * desocupados / pea, 2)
-  ) |> 
-pivot_longer(
-  cols = everything(),
-  names_to = "indicador",
-  values_to = "porcentaje") %>%
-  mutate(
-indicador = recode(
-  indicador,
-  tasa_actividad = "Tasa de actividad",
-  tasa_empleo = "Tasa de empleo",
-  tasa_desempleo = "Tasa de desempleo"))
+
+tasas_comparadas <- bind_rows(
+  tasas_total,
+  tasas_dificultad
+) %>%
+  select(
+    poblacion,
+    poblacion_referencia,
+    ocupados,
+    desocupados,
+    pea,
+    tasa_actividad,
+    tasa_empleo,
+    tasa_desempleo
+  )
+
+tasas_comparadas
 
 
 
